@@ -113,7 +113,7 @@ window.renderSalvos = async function() {
     table.className = 'min-w-full divide-y divide-gray-200';
     
     const thead = document.createElement('thead');
-    thead.className = 'bg-gray-50';
+    thead.className = 'bg-gray-50 sticky top-0 z-10';
     thead.innerHTML = `
         <tr>
             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome</th>
@@ -145,7 +145,7 @@ window.renderSalvos = async function() {
         
         const rendimentoCell = document.createElement('td');
         rendimentoCell.className = 'px-6 py-4 whitespace-nowrap text-sm text-gray-900';
-        rendimentoCell.textContent = insumo.rendimento;
+        rendimentoCell.textContent = Number(insumo.rendimento).toString().replace('.', ',');
         
         const acoesCell = document.createElement('td');
         acoesCell.className = 'px-6 py-4 whitespace-nowrap text-right text-sm font-medium';
@@ -317,7 +317,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         nome: values[nomeIdx],
                         unidade: values[unidadeIdx],
                         preco: Number(precoLimpo.replace(',', '.')) || 0,
-                        rendimento: Number(values[rendimentoIdx]) || 1
+                        rendimento: parseFloat(values[rendimentoIdx].replace(',', '.')) || 1
                     });
                 }
             }
