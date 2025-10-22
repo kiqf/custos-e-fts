@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastrar Insumos - Resumo Custos</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+    <nav class="bg-gray-800 text-white py-4 mb-8">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-wrap justify-center gap-4 md:gap-8">
+                <a href="resumo-pratos.html" class="px-4 py-2 rounded hover:bg-gray-700 transition-colors">Resumo de Pratos</a>
+                <a href="resumo-insumos.html" class="px-4 py-2 rounded hover:bg-gray-700 transition-colors">Resumo de Insumos</a>
+                <a href="fichas-tecnicas.html" class="px-4 py-2 rounded hover:bg-gray-700 transition-colors">Fichas Técnicas</a>
+                <a href="cadastrar-pratos.html" class="px-4 py-2 rounded hover:bg-gray-700 transition-colors">Cadastrar Pratos</a>
+                <a href="cadastrar-insumos.html" class="px-4 py-2 rounded bg-gray-700 hover:bg-gray-700 transition-colors">Cadastrar Insumos</a>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="container mx-auto px-4">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6">Cadastrar Insumos</h1>
+        <div class="bg-white rounded-lg shadow p-6">
+            <form id="insumosForm">
+                <div id="insumosContainer">
+                    <!-- Linhas de insumos serão adicionadas aqui -->
+                </div>
+                <div class="flex items-center">
+                    <button type="button" id="addInsumoBtn" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors">Adicionar Insumo</button>
+                    <button type="submit" class="mt-4 ml-2 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors">Salvar Todos</button>
+                </div>
+            </form>
+            <div id="salvosContainer" class="mt-6">
+                <h2 class="text-xl font-semibold mb-4">Insumos Pré-Salvos</h2>
+                <div id="listaSalvos" class="shadow overflow-hidden border-b border-gray-200 sm:rounded-lg"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Edição -->
+    <div id="editModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center">
+        <div class="bg-white rounded-lg p-6 w-96">
+            <h3 class="text-lg font-semibold mb-4">Editar Insumo</h3>
+            <form id="editForm">
+                <input type="hidden" id="editId">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700">Nome</label>
+                    <input type="text" id="editNome" required class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700">Unidade</label>
+                    <select id="editUnidade" required class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                        <option value="Kg">Kg</option>
+                        <option value="g">g</option>
+                        <option value="Lt">Lt</option>
+                        <option value="ml">ml</option>
+                        <option value="un">un</option>
+                        <option value="cx">cx</option>
+                        <option value="pct">pct</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700">Preço</label>
+                    <input type="text" id="editPreco" required pattern="^\d+[,]\d{1,2}$|^\d+$" class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500" onkeyup="this.value = this.value.replace(/[^0-9,]/g, '').replace(/(,.*?),/g, '$1')">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700">Rendimento</label>
+                    <input type="number" id="editRendimento" required min="1" step="1" class="mt-1 block w-full rounded border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div class="flex justify-end gap-2">
+                    <button type="button" id="cancelEdit" class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="../../js/main.js"></script>
+</body>
+</html>

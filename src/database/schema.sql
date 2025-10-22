@@ -1,0 +1,10 @@
+-- Criação da tabela de insumos
+CREATE TABLE IF NOT EXISTS insumos (
+    id TEXT PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL,
+    unidade VARCHAR(10) NOT NULL,
+    preco DECIMAL(10,2) NOT NULL,
+    rendimento INTEGER NOT NULL DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
