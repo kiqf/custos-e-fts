@@ -112,17 +112,21 @@ O servidor será reiniciado automaticamente quando houver mudanças nos arquivos
 
 ## Funcionalidades Implementadas
 - ✅ CRUD completo de insumos (Create, Read, Update, Delete)
+- ✅ CRUD completo de pratos com modal de edição
 - ✅ Banco de dados SQLite com UUIDs
-- ✅ Modal de edição de insumos
+- ✅ Modal de edição de insumos e pratos
+- ✅ Importação de insumos via CSV
 - ✅ Validação de formulários
 - ✅ API REST com Express.js
 - ✅ Segurança com Helmet e Rate Limiting
+- ✅ Interface de fichas técnicas (estrutura base)
 
 ## Próximas Funcionalidades
-- Gestão de pratos
-- Fichas técnicas
-- Cálculo de custos
 - Relatórios
+- Análises avançadas de custos
+
+## Em Desenvolvimento
+- 🚧 Fichas Técnicas e Cálculo de Custos - Interface em construção
 
 ## API Endpoints
 

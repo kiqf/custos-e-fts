@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fichas Técnicas - Resumo Custos</title>
+    <title>Fichas Técnicas e Cálculo de Custos - Resumo Custos</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100">
@@ -11,20 +11,146 @@
         <div class="container mx-auto px-4">
             <div class="flex flex-wrap justify-center gap-4 md:gap-8">
                 <a href="resumo-pratos.html" class="px-4 py-2 rounded hover:bg-gray-700 transition-colors">Resumo</a>
-                <a href="fichas-tecnicas.html" class="px-4 py-2 rounded bg-gray-700 hover:bg-gray-700 transition-colors">Fichas Técnicas</a>
-                <a href="cadastrar-pratos.html" class="px-4 py-2 rounded hover:bg-gray-700 transition-colors">Cadastrar Pratos</a>
-                <a href="cadastrar-insumos.html" class="px-4 py-2 rounded hover:bg-gray-700 transition-colors">Cadastrar Insumos</a>
+                <a href="fichas-tecnicas.html" class="px-4 py-2 rounded bg-gray-700 hover:bg-gray-700 transition-colors">Fichas e Custos</a>
+                <a href="cadastrar-pratos.html" class="px-4 py-2 rounded hover:bg-gray-700 transition-colors">Pratos</a>
+                <a href="cadastrar-insumos.html" class="px-4 py-2 rounded hover:bg-gray-700 transition-colors">Insumos</a>
             </div>
         </div>
     </nav>
     
     <div class="container mx-auto px-4">
-        <h1 class="text-3xl font-bold text-gray-800 mb-6">Fichas Técnicas</h1>
-        <div class="bg-white rounded-lg shadow p-6">
-            <!-- Conteúdo específico da página será adicionado aqui -->
-            <p class="text-gray-600">Lista de fichas técnicas dos pratos será exibida aqui.</p>
+        <h1 class="text-3xl font-bold text-gray-800 mb-6">Fichas Técnicas e Cálculo de Custos</h1>
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+            <div class="flex">
+                <!-- Cabeçalho vertical fixo -->
+                <div class="flex-shrink-0 bg-gray-50 border-r">
+                    <div class="h-16 border-b flex items-center px-4 bg-gray-100">
+                        <!-- Espaço para cabeçalho secundário -->
+                    </div>
+                    <div class="border-b">
+                        <div class="h-8 border-b flex items-center px-6 text-sm font-medium text-gray-700 bg-yellow-200">
+                            Preço de Venda
+                        </div>
+                        <div class="h-8 border-b flex items-center px-6 text-sm text-gray-600">
+                            Frete
+                        </div>
+                    </div>
+                    <div class="border-b">
+                        <div class="h-8 border-b flex items-center px-6 text-sm text-gray-600">
+                            Taxa iFood (22%)
+                        </div>
+                        <div class="h-8 border-b flex items-center px-6 text-sm text-gray-600">
+                            Simples (11%)
+                        </div>
+                        <div class="h-8 border-b flex items-center px-6 text-sm text-gray-600">
+                            Royalties (4%)
+                        </div>
+                        <div class="h-8 border-b flex items-center px-6 text-sm text-gray-600">
+                            FUP (1%)
+                        </div>
+                        <div class="h-8 border-b flex items-center px-6 text-sm text-gray-600">
+                            Taxa de Cartão
+                        </div>
+                        <div class="h-8 border-b flex items-center px-6 text-sm font-medium text-gray-700 bg-gray-100">
+                            Total Deduções de Venda
+                        </div>
+                    </div>
+                    <div class="border-b">
+                        <div class="h-8 border-b flex items-center px-6 text-sm text-gray-600">
+                            Embalagem + Saco
+                        </div>
+                        <div class="h-8 border-b flex items-center px-6 text-sm text-gray-600">
+                            Outros Descartáveis
+                        </div>
+                        <div class="h-8 border-b flex items-center px-6 text-sm text-gray-600">
+                            Lacre
+                        </div>
+                        <div class="h-8 border-b flex items-center px-6 text-sm font-medium text-gray-700 bg-yellow-200">
+                            Custo do Produto
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Área de conteúdo com scroll horizontal -->
+                <div class="flex-1 overflow-x-auto">
+                    <div class="min-w-full">
+                        <!-- Cabeçalho secundário (pratos) -->
+                        <div id="headerSecundario" class="h-16 border-b bg-gray-100 flex items-end pb-2">
+                            <!-- Cabeçalhos dos pratos com R$ e % -->
+                        </div>
+                        
+                        <!-- Linhas de vendas -->
+                        <div class="border-b">
+                            <div id="linhaPrecoVenda" class="h-8 border-b flex">
+                                <!-- Preços de venda -->
+                            </div>
+                            <div id="linhaFrete" class="h-8 border-b flex">
+                                <!-- Valores de frete -->
+                            </div>
+                        </div>
+                        
+                        <!-- Linhas de despesas variáveis -->
+                        <div class="border-b">
+                            <div id="linhaTaxaIfood" class="h-8 border-b flex">
+                                <!-- Taxa iFood -->
+                            </div>
+                            <div id="linhaSimples" class="h-8 border-b flex">
+                                <!-- Simples -->
+                            </div>
+                            <div id="linhaRoyalties" class="h-8 border-b flex">
+                                <!-- Royalties -->
+                            </div>
+                            <div id="linhaFup" class="h-8 border-b flex">
+                                <!-- FUP -->
+                            </div>
+                            <div id="linhaTaxaCartao" class="h-8 border-b flex">
+                                <!-- Taxa de cartão -->
+                            </div>
+                            <div id="linhaTotalDeducoes" class="h-8 border-b flex bg-gray-100">
+                                <!-- Total deduções -->
+                            </div>
+                        </div>
+                        
+                        <!-- Linhas de custos variáveis -->
+                        <div class="border-b">
+                            <div id="linhaEmbalagem" class="h-8 border-b flex">
+                                <!-- Embalagem + Saco -->
+                            </div>
+                            <div id="linhaDescartaveis" class="h-8 border-b flex">
+                                <!-- Outros Descartáveis -->
+                            </div>
+                            <div id="linhaLacre" class="h-8 border-b flex">
+                                <!-- Lacre -->
+                            </div>
+                            <div id="linhaCustoProduto" class="h-8 border-b flex bg-yellow-100">
+                                <!-- Custo do Produto -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
+    <!-- Modal de Preço de Venda -->
+    <div id="precoModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 w-96">
+            <h3 class="text-lg font-semibold mb-4">Definir Preço de Venda</h3>
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Prato:</label>
+                <p id="nomePratoModal" class="text-gray-900 font-medium"></p>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Preço:</label>
+                <input type="number" id="precoInput" step="0.01" min="0" class="w-full rounded border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="0,00">
+            </div>
+            <div class="flex justify-end gap-2">
+                <button id="cancelPreco" class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400">Cancelar</button>
+                <button id="salvarPreco" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Salvar</button>
+            </div>
+        </div>
+    </div>
+
     <script src="../../js/main.js"></script>
+    <script src="../../js/fichas-tecnicas.js"></script>
 </body>
 </html>

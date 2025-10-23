@@ -1,6 +1,7 @@
 const express = require('express');
 const path = require('path');
 const InsumoRepository = require('./database/insumoRepository');
+const PratoRepository = require('./database/pratoRepository');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 
@@ -66,6 +67,64 @@ app.put('/api/insumos/:id', async (req, res) => {
 app.delete('/api/insumos/:id', async (req, res) => {
     try {
         await InsumoRepository.excluir(req.params.id);
+        res.status(204).send();
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Rotas para pratos
+app.get('/api/pratos', async (req, res) => {
+    try {
+        const pratos = await PratoRepository.listarTodos();
+        res.json(pratos);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/pratos/:id', async (req, res) => {
+    try {
+        const prato = await PratoRepository.buscarPorId(req.params.id);
+        if (!prato) {
+            return res.status(404).json({ error: 'Prato não encontrado' });
+        }
+        res.json(prato);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/pratos', async (req, res) => {
+    try {
+        const prato = await PratoRepository.criar(req.body);
+        res.status(201).json(prato);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.delete('/api/pratos/:id', async (req, res) => {
+    try {
+        await PratoRepository.excluir(req.params.id);
+        res.status(204).send();
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.put('/api/pratos/:pratoId/insumos/:insumoId', async (req, res) => {
+    try {
+        await PratoRepository.atualizarQuantidadeInsumo(req.params.pratoId, req.params.insumoId, req.body.quantidade);
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.delete('/api/pratos/:pratoId/insumos/:insumoId', async (req, res) => {
+    try {
+        await PratoRepository.removerInsumo(req.params.pratoId, req.params.insumoId);
         res.status(204).send();
     } catch (error) {
         res.status(500).json({ error: error.message });
