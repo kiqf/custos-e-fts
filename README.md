@@ -120,15 +120,23 @@ O servidor será reiniciado automaticamente quando houver mudanças nos arquivos
 - ✅ API REST com Express.js
 - ✅ Segurança com Helmet e Rate Limiting
 - ✅ Interface de fichas técnicas (estrutura base)
+- ✅ Cálculo de Custos completo com:
+  - Preço de venda configurável
+  - Cálculo automático de taxas (iFood, Simples, Royalties, FUP)
+  - Total de deduções de venda
+  - Faturamento líquido (R$ e %)
+  - Custo do produto com percentual sobre preço de venda
+  - Formatação brasileira (vírgula decimal)
 
 ## Próximas Funcionalidades
 - Loading dos itens importados em insumos
 - Importação e loading para cadastro de pratos
+- Custos variáveis (embalagem, descartáveis, lacre)
 - Relatórios
 - Análises avançadas de custos
 
 ## Em Desenvolvimento
-- 🚧 Fichas Técnicas e Cálculo de Custos - Interface em construção
+- 🚧 Custos Variáveis na tabela de cálculo
 
 ## API Endpoints
 
