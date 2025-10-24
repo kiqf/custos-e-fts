@@ -255,8 +255,8 @@ document.addEventListener('DOMContentLoaded', async function() {
                     });
                     
                     const removeBtn = document.createElement('button');
-                    removeBtn.className = 'text-red-600 hover:text-red-900';
-                    removeBtn.textContent = 'Remover';
+                    removeBtn.className = 'text-red-600 hover:text-red-900 mr-3';
+                    removeBtn.textContent = 'Remover Insumo';
                     removeBtn.addEventListener('click', async () => {
                         if (confirm('Tem certeza que deseja remover este insumo do prato?')) {
                             try {
@@ -270,8 +270,33 @@ document.addEventListener('DOMContentLoaded', async function() {
                         }
                     });
                     
+                    const deletePratoBtn = document.createElement('button');
+                    deletePratoBtn.className = 'text-red-800 hover:text-red-900';
+                    deletePratoBtn.textContent = 'Excluir Prato';
+                    deletePratoBtn.addEventListener('click', async () => {
+                        if (confirm('Tem certeza que deseja excluir este prato completamente?')) {
+                            try {
+                                await fetch(`/api/pratos/${prato.id}`, {
+                                    method: 'DELETE'
+                                });
+                                await renderPratos();
+                                
+                                // Notificar outras páginas sobre a exclusão
+                                if (window.opener && !window.opener.closed) {
+                                    window.opener.postMessage({ type: 'PRATO_DELETED', pratoId: prato.id }, '*');
+                                }
+                                
+                                // Disparar evento customizado
+                                window.dispatchEvent(new CustomEvent('pratoExcluido', { detail: { pratoId: prato.id } }));
+                            } catch (error) {
+                                alert('Erro ao excluir prato: ' + error.message);
+                            }
+                        }
+                    });
+                    
                     acoesCell.appendChild(editBtn);
                     acoesCell.appendChild(removeBtn);
+                    acoesCell.appendChild(deletePratoBtn);
                     
                     tr.appendChild(nomeCell);
                     tr.appendChild(categoriaCell);

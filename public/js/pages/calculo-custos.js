@@ -5,6 +5,23 @@ document.addEventListener('DOMContentLoaded', async function() {
     await carregarPratos();
     renderizarTabela();
     configurarModal();
+    
+    // Escutar eventos de exclusão de pratos
+    window.addEventListener('pratoExcluido', async (event) => {
+        const pratoId = event.detail.pratoId;
+        delete precos[pratoId];
+        await carregarPratos();
+        renderizarTabela();
+    });
+    
+    window.addEventListener('message', async (event) => {
+        if (event.data.type === 'PRATO_DELETED') {
+            const pratoId = event.data.pratoId;
+            delete precos[pratoId];
+            await carregarPratos();
+            renderizarTabela();
+        }
+    });
 
     async function carregarPratos() {
         try {
@@ -184,11 +201,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                     
                     if (taxaReal > 0) {
                         cellReal.textContent = formatarMoeda(taxaReal);
-                        if (linhaId === 'linhaFaturamentoLiquido') {
-                            cellPerc.textContent = taxaPerc.toFixed(1).replace('.', ',') + '%';
-                        } else {
-                            cellPerc.textContent = taxaPerc.toFixed(0) + '%';
-                        }
+                        cellPerc.textContent = taxaPerc.toFixed(2).replace('.', ',') + '%';
                     } else {
                         cellReal.textContent = '-';
                         cellPerc.textContent = '-';
@@ -206,7 +219,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 
     function renderizarLinhasCustos() {
-        const linhas = ['linhaEmbalagem', 'linhaDescartaveis', 'linhaLacre', 'linhaCustoProduto'];
+        const linhas = ['linhaEmbalagem', 'linhaDescartaveis', 'linhaLacre', 'linhaCustoProduto', 'linhaCmvTotal', 'linhaLucroBruto'];
         
         linhas.forEach(linhaId => {
             const linha = document.getElementById(linhaId);
@@ -222,15 +235,51 @@ document.addEventListener('DOMContentLoaded', async function() {
                 const cellPerc = document.createElement('div');
                 cellPerc.className = 'flex-1 h-8 flex items-center justify-center text-sm';
                 
-                if (linhaId === 'linhaCustoProduto') {
-                    cellReal.textContent = formatarMoeda(prato.custoProduto || 0);
+                if (precos[prato.id]) {
+                    const precoVenda = precos[prato.id];
+                    const custosVariaveis = calcularTodosCustosVariaveis(precoVenda);
                     
-                    // Calcular porcentagem do custo em relação ao preço de venda
-                    if (precos[prato.id] && precos[prato.id] > 0) {
-                        const percentualCusto = (prato.custoProduto / precos[prato.id]) * 100;
-                        cellPerc.textContent = percentualCusto.toFixed(1).replace('.', ',') + '%';
-                    } else {
-                        cellPerc.textContent = '-';
+                    switch(linhaId) {
+                        case 'linhaEmbalagem':
+                            cellReal.textContent = formatarMoeda(custosVariaveis.embalagemSaco.reais);
+                            cellPerc.textContent = custosVariaveis.embalagemSaco.percentual.toFixed(2).replace('.', ',') + '%';
+                            break;
+                        case 'linhaDescartaveis':
+                            cellReal.textContent = formatarMoeda(custosVariaveis.outrosDescartaveis.reais);
+                            cellPerc.textContent = custosVariaveis.outrosDescartaveis.percentual.toFixed(2).replace('.', ',') + '%';
+                            break;
+                        case 'linhaLacre':
+                            cellReal.textContent = formatarMoeda(custosVariaveis.lacre.reais);
+                            cellPerc.textContent = custosVariaveis.lacre.percentual.toFixed(2).replace('.', ',') + '%';
+                            break;
+                        case 'linhaCustoProduto':
+                            cellReal.textContent = formatarMoeda(prato.custoProduto || 0);
+                            if (precoVenda > 0) {
+                                const percentualCusto = (prato.custoProduto / precoVenda) * 100;
+                                cellPerc.textContent = percentualCusto.toFixed(2).replace('.', ',') + '%';
+                            } else {
+                                cellPerc.textContent = '-';
+                            }
+                            break;
+                        case 'linhaCmvTotal':
+                            const cmvTotal = custosVariaveis.embalagemSaco.reais + custosVariaveis.outrosDescartaveis.reais + custosVariaveis.lacre.reais + (prato.custoProduto || 0) + custosVariaveis.frete.reais;
+                            cellReal.textContent = formatarMoeda(cmvTotal);
+                            const percentualCmv = (cmvTotal / precoVenda) * 100;
+                            cellPerc.textContent = percentualCmv.toFixed(2).replace('.', ',') + '%';
+                            break;
+                        case 'linhaLucroBruto':
+                            const faturamentoLiquido = precoVenda - calcularTotalDeducoes(precoVenda);
+                            const cmvTotalCalc = custosVariaveis.embalagemSaco.reais + custosVariaveis.outrosDescartaveis.reais + custosVariaveis.lacre.reais + (prato.custoProduto || 0) + custosVariaveis.frete.reais;
+                            const lucroBruto = faturamentoLiquido - cmvTotalCalc;
+                            const percentualLucro = (lucroBruto / precoVenda) * 100;
+                            
+                            cellReal.textContent = formatarMoeda(lucroBruto);
+                            cellPerc.textContent = percentualLucro.toFixed(2).replace('.', ',') + '%';
+                            
+                            const cor = lucroBruto >= 0 ? 'text-green-600' : 'text-red-600';
+                            cellReal.className = cellReal.className.replace(/text-\w+-\d+/, '') + ' ' + cor;
+                            cellPerc.className = cellPerc.className.replace(/text-\w+-\d+/, '') + ' ' + cor;
+                            break;
                     }
                 } else {
                     cellReal.textContent = '-';
