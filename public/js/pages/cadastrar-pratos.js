@@ -1,11 +1,15 @@
-// Script para gerenciamento de pratos
+// Script específico para página de cadastrar pratos
 document.addEventListener('DOMContentLoaded', async function() {
     if (!document.getElementById('pratoForm')) return;
 
     let insumos = [];
     let insumoIndex = 0;
 
-    // Carregar insumos disponíveis
+    await carregarInsumos();
+    await renderPratos();
+    configurarModal();
+
+    // Funções da página
     async function carregarInsumos() {
         try {
             const response = await fetch('/api/insumos');
@@ -15,7 +19,69 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     }
 
-    // Criar linha de insumo
+    function configurarModal() {
+        Modal.configurarBotoes('pratoModal', 'cancelModal', null);
+        
+        document.getElementById('novoPratoBtn').addEventListener('click', () => {
+            abrirModal();
+        });
+        
+        document.getElementById('addInsumoBtn').addEventListener('click', () => {
+            const container = document.getElementById('insumosContainer');
+            container.appendChild(criarLinhaInsumo(insumoIndex++));
+        });
+
+        document.getElementById('pratoForm').addEventListener('submit', salvarPrato);
+    }
+
+    function abrirModal(pratoId = null) {
+        Modal.abrir('pratoModal');
+        
+        if (pratoId) {
+            document.getElementById('modalTitle').textContent = 'Editar Prato';
+            carregarPrato(pratoId);
+        } else {
+            document.getElementById('modalTitle').textContent = 'Novo Prato';
+            document.getElementById('pratoForm').reset();
+            document.getElementById('pratoId').value = '';
+            document.getElementById('categoriaPrato').value = '';
+            document.getElementById('operacaoPrato').value = '';
+            document.getElementById('insumosContainer').innerHTML = '';
+            document.getElementById('addInsumoBtn').click();
+        }
+    }
+    
+    async function carregarPrato(id) {
+        try {
+            const response = await fetch(`/api/pratos/${id}`);
+            const prato = await response.json();
+            
+            document.getElementById('pratoId').value = prato.id;
+            document.getElementById('nomePrato').value = prato.nome;
+            document.getElementById('categoriaPrato').value = prato.categoria || '';
+            document.getElementById('operacaoPrato').value = prato.operacao;
+            
+            const container = document.getElementById('insumosContainer');
+            container.innerHTML = '';
+            
+            if (prato.insumos && prato.insumos.length > 0) {
+                prato.insumos.forEach(insumo => {
+                    const linha = criarLinhaInsumo(insumoIndex++);
+                    const select = linha.querySelector('select');
+                    const quantidadeInput = linha.querySelector('input[name="quantidade[]"]');
+                    
+                    select.value = insumo.insumo_id;
+                    quantidadeInput.value = insumo.quantidade;
+                    container.appendChild(linha);
+                });
+            } else {
+                document.getElementById('addInsumoBtn').click();
+            }
+        } catch (error) {
+            alert('Erro ao carregar prato: ' + error.message);
+        }
+    }
+
     function criarLinhaInsumo(index) {
         const div = document.createElement('div');
         div.className = 'flex gap-2 mb-2 items-end insumo-linha';
@@ -70,66 +136,12 @@ document.addEventListener('DOMContentLoaded', async function() {
         return div;
     }
 
-    // Modal handlers
-    function abrirModal(pratoId = null) {
-        document.getElementById('pratoModal').classList.remove('hidden');
-        document.getElementById('pratoModal').classList.add('flex');
-        
-        if (pratoId) {
-            document.getElementById('modalTitle').textContent = 'Editar Prato';
-            carregarPrato(pratoId);
-        } else {
-            document.getElementById('modalTitle').textContent = 'Novo Prato';
-            document.getElementById('pratoForm').reset();
-            document.getElementById('pratoId').value = '';
-            document.getElementById('insumosContainer').innerHTML = '';
-            document.getElementById('addInsumoBtn').click();
-        }
-    }
-    
-    async function carregarPrato(id) {
-        try {
-            const response = await fetch(`/api/pratos/${id}`);
-            const prato = await response.json();
-            
-            document.getElementById('pratoId').value = prato.id;
-            document.getElementById('nomePrato').value = prato.nome;
-            
-            const container = document.getElementById('insumosContainer');
-            container.innerHTML = '';
-            
-            prato.insumos.forEach(insumo => {
-                const linha = criarLinhaInsumo(insumoIndex++);
-                linha.querySelector('select').value = insumo.insumo_id;
-                linha.querySelector('input[name="quantidade[]"]').value = insumo.quantidade.toString().replace('.', ',');
-                container.appendChild(linha);
-            });
-        } catch (error) {
-            alert('Erro ao carregar prato: ' + error.message);
-        }
-    }
-    
-    document.getElementById('novoPratoBtn').addEventListener('click', () => {
-        abrirModal();
-    });
-    
-    document.getElementById('cancelModal').addEventListener('click', () => {
-        document.getElementById('pratoModal').classList.add('hidden');
-        document.getElementById('pratoModal').classList.remove('flex');
-    });
-    
-    // Adicionar linha de insumo
-    document.getElementById('addInsumoBtn').addEventListener('click', () => {
-        const container = document.getElementById('insumosContainer');
-        container.appendChild(criarLinhaInsumo(insumoIndex++));
-    });
-
-    // Salvar prato
-    document.getElementById('pratoForm').addEventListener('submit', async (e) => {
+    async function salvarPrato(e) {
         e.preventDefault();
         
         const formData = new FormData(e.target);
         const nome = document.getElementById('nomePrato').value;
+        const categoria = document.getElementById('categoriaPrato').value;
         const pratoId = document.getElementById('pratoId').value;
         const insumoIds = formData.getAll('insumo_id[]');
         const quantidades = formData.getAll('quantidade[]');
@@ -141,6 +153,8 @@ document.addEventListener('DOMContentLoaded', async function() {
         
         const prato = {
             nome,
+            categoria: categoria || null,
+            operacao: document.getElementById('operacaoPrato').value,
             insumos: insumoIds.map((id, i) => ({
                 insumo_id: id,
                 quantidade: parseFloat(quantidades[i].replace(',', '.'))
@@ -148,16 +162,18 @@ document.addEventListener('DOMContentLoaded', async function() {
         };
         
         try {
-            const response = await fetch('/api/pratos', {
-                method: 'POST',
+            const url = pratoId ? `/api/pratos/${pratoId}` : '/api/pratos';
+            const method = pratoId ? 'PUT' : 'POST';
+            
+            const response = await fetch(url, {
+                method: method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(prato)
             });
             
             if (response.ok) {
                 alert(pratoId ? 'Prato atualizado com sucesso!' : 'Prato cadastrado com sucesso!');
-                document.getElementById('pratoModal').classList.add('hidden');
-                document.getElementById('pratoModal').classList.remove('flex');
+                Modal.fechar('pratoModal');
                 await renderPratos();
             } else {
                 throw new Error('Erro ao salvar prato');
@@ -165,9 +181,8 @@ document.addEventListener('DOMContentLoaded', async function() {
         } catch (error) {
             alert('Erro ao salvar prato: ' + error.message);
         }
-    });
+    }
 
-    // Renderizar lista de pratos
     async function renderPratos() {
         try {
             const response = await fetch('/api/pratos');
@@ -187,9 +202,11 @@ document.addEventListener('DOMContentLoaded', async function() {
             thead.innerHTML = `
                 <tr>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nome</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Categoria</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Insumos</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Quantidade</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Preço</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Operação</th>
                     <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Ações</th>
                 </tr>
             `;
@@ -207,17 +224,25 @@ document.addEventListener('DOMContentLoaded', async function() {
                     nomeCell.className = 'px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900';
                     nomeCell.textContent = prato.nome;
                     
+                    const categoriaCell = document.createElement('td');
+                    categoriaCell.className = 'px-6 py-4 whitespace-nowrap text-sm text-gray-900';
+                    categoriaCell.textContent = prato.categoria || '-';
+                    
                     const insumoCell = document.createElement('td');
                     insumoCell.className = 'px-6 py-4 whitespace-nowrap text-sm text-gray-900';
                     insumoCell.textContent = `${insumo.nome} (${insumo.unidade})`;
                     
                     const quantidadeCell = document.createElement('td');
                     quantidadeCell.className = 'px-6 py-4 whitespace-nowrap text-sm text-gray-900';
-                    quantidadeCell.textContent = insumo.quantidade.toString().replace('.', ',');
+                    quantidadeCell.textContent = formatarRendimento(insumo.quantidade);
                     
                     const precoCell = document.createElement('td');
                     precoCell.className = 'px-6 py-4 whitespace-nowrap text-sm text-gray-900';
-                    precoCell.textContent = `R$ ${Number(insumo.preco).toFixed(2).replace('.', ',')}`;
+                    precoCell.textContent = formatarMoeda(insumo.preco);
+                    
+                    const operacaoCell = document.createElement('td');
+                    operacaoCell.className = 'px-6 py-4 whitespace-nowrap text-sm text-gray-900';
+                    operacaoCell.textContent = prato.operacao;
                     
                     const acoesCell = document.createElement('td');
                     acoesCell.className = 'px-6 py-4 whitespace-nowrap text-right text-sm font-medium';
@@ -249,9 +274,11 @@ document.addEventListener('DOMContentLoaded', async function() {
                     acoesCell.appendChild(removeBtn);
                     
                     tr.appendChild(nomeCell);
+                    tr.appendChild(categoriaCell);
                     tr.appendChild(insumoCell);
                     tr.appendChild(quantidadeCell);
                     tr.appendChild(precoCell);
+                    tr.appendChild(operacaoCell);
                     tr.appendChild(acoesCell);
                     tbody.appendChild(tr);
                     
@@ -268,8 +295,4 @@ document.addEventListener('DOMContentLoaded', async function() {
             console.error('Erro ao carregar pratos:', error);
         }
     }
-
-    // Inicialização
-    await carregarInsumos();
-    await renderPratos();
 });

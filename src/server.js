@@ -104,6 +104,15 @@ app.post('/api/pratos', async (req, res) => {
     }
 });
 
+app.put('/api/pratos/:id', async (req, res) => {
+    try {
+        const prato = await PratoRepository.atualizar(req.params.id, req.body);
+        res.json(prato);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 app.delete('/api/pratos/:id', async (req, res) => {
     try {
         await PratoRepository.excluir(req.params.id);

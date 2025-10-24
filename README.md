@@ -122,6 +122,8 @@ O servidor será reiniciado automaticamente quando houver mudanças nos arquivos
 - ✅ Interface de fichas técnicas (estrutura base)
 
 ## Próximas Funcionalidades
+- Loading dos itens importados em insumos
+- Importação e loading para cadastro de pratos
 - Relatórios
 - Análises avançadas de custos
 

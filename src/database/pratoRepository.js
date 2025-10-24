@@ -12,8 +12,8 @@ class PratoRepository {
                 
                 // Inserir prato
                 db.run(
-                    'INSERT INTO pratos (id, nome) VALUES (?, ?)',
-                    [pratoId, prato.nome],
+                    'INSERT INTO pratos (id, nome, categoria, operacao) VALUES (?, ?, ?, ?)',
+                    [pratoId, prato.nome, prato.categoria, prato.operacao],
                     function(err) {
                         if (err) {
                             db.run('ROLLBACK');
@@ -76,6 +76,8 @@ class PratoRepository {
                             pratos[row.id] = {
                                 id: row.id,
                                 nome: row.nome,
+                                categoria: row.categoria,
+                                operacao: row.operacao,
                                 created_at: row.created_at,
                                 updated_at: row.updated_at,
                                 insumos: []
@@ -125,6 +127,8 @@ class PratoRepository {
                     const prato = {
                         id: rows[0].id,
                         nome: rows[0].nome,
+                        categoria: rows[0].categoria,
+                        operacao: rows[0].operacao,
                         created_at: rows[0].created_at,
                         updated_at: rows[0].updated_at,
                         insumos: []
@@ -172,6 +176,65 @@ class PratoRepository {
                 } else {
                     resolve(true);
                 }
+            });
+        });
+    }
+
+    // Atualizar prato
+    static atualizar(id, prato) {
+        return new Promise((resolve, reject) => {
+            db.serialize(() => {
+                db.run('BEGIN TRANSACTION');
+                
+                // Atualizar prato
+                db.run(
+                    'UPDATE pratos SET nome = ?, categoria = ?, operacao = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+                    [prato.nome, prato.categoria, prato.operacao, id],
+                    function(err) {
+                        if (err) {
+                            db.run('ROLLBACK');
+                            return reject(err);
+                        }
+                        
+                        // Remover insumos existentes
+                        db.run('DELETE FROM prato_insumos WHERE prato_id = ?', [id], function(err) {
+                            if (err) {
+                                db.run('ROLLBACK');
+                                return reject(err);
+                            }
+                            
+                            // Inserir novos insumos
+                            let completed = 0;
+                            const total = prato.insumos.length;
+                            
+                            if (total === 0) {
+                                db.run('COMMIT');
+                                return resolve({ id, ...prato });
+                            }
+                            
+                            prato.insumos.forEach(insumo => {
+                                const { v4: uuidv4 } = require('uuid');
+                                const insumoId = uuidv4();
+                                db.run(
+                                    'INSERT INTO prato_insumos (id, prato_id, insumo_id, quantidade) VALUES (?, ?, ?, ?)',
+                                    [insumoId, id, insumo.insumo_id, insumo.quantidade],
+                                    function(err) {
+                                        if (err) {
+                                            db.run('ROLLBACK');
+                                            return reject(err);
+                                        }
+                                        
+                                        completed++;
+                                        if (completed === total) {
+                                            db.run('COMMIT');
+                                            resolve({ id, ...prato });
+                                        }
+                                    }
+                                );
+                            });
+                        });
+                    }
+                );
             });
         });
     }
