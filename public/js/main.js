@@ -1,7 +1,23 @@
 // Arquivo principal de JavaScript - Funções globais e inicialização
 document.addEventListener('DOMContentLoaded', () => {
     console.log('Aplicação iniciada');
+    destacarPaginaAtiva();
 });
+
+// Função para destacar a página ativa na navegação
+function destacarPaginaAtiva() {
+    const currentPage = window.location.pathname.split('/').pop();
+    const navLinks = document.querySelectorAll('nav a');
+    
+    navLinks.forEach(link => {
+        link.classList.remove('bg-gray-700');
+        
+        const linkPage = link.getAttribute('href');
+        if (linkPage === currentPage) {
+            link.classList.add('bg-gray-700');
+        }
+    });
+}
 
 // Funções globais para API de insumos
 window.excluirInsumo = async function(id) {
