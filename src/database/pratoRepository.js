@@ -12,8 +12,8 @@ class PratoRepository {
                 
                 // Inserir prato
                 db.run(
-                    'INSERT INTO pratos (id, nome, categoria, operacao) VALUES (?, ?, ?, ?)',
-                    [pratoId, prato.nome, prato.categoria, prato.operacao],
+                    'INSERT INTO pratos (id, nome, categoria, operacao, preco_venda) VALUES (?, ?, ?, ?, ?)',
+                    [pratoId, prato.nome, prato.categoria, prato.operacao, prato.preco_venda || null],
                     function(err) {
                         if (err) {
                             db.run('ROLLBACK');
@@ -78,6 +78,7 @@ class PratoRepository {
                                 nome: row.nome,
                                 categoria: row.categoria,
                                 operacao: row.operacao,
+                                preco_venda: row.preco_venda,
                                 created_at: row.created_at,
                                 updated_at: row.updated_at,
                                 insumos: []
@@ -129,6 +130,7 @@ class PratoRepository {
                         nome: rows[0].nome,
                         categoria: rows[0].categoria,
                         operacao: rows[0].operacao,
+                        preco_venda: rows[0].preco_venda,
                         created_at: rows[0].created_at,
                         updated_at: rows[0].updated_at,
                         insumos: []
@@ -180,6 +182,20 @@ class PratoRepository {
         });
     }
 
+    // Atualizar preço de venda
+    static atualizarPrecoVenda(id, precoVenda) {
+        return new Promise((resolve, reject) => {
+            const sql = 'UPDATE pratos SET preco_venda = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?';
+            db.run(sql, [precoVenda, id], function(err) {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(true);
+                }
+            });
+        });
+    }
+
     // Atualizar prato
     static atualizar(id, prato) {
         return new Promise((resolve, reject) => {
@@ -188,8 +204,8 @@ class PratoRepository {
                 
                 // Atualizar prato
                 db.run(
-                    'UPDATE pratos SET nome = ?, categoria = ?, operacao = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-                    [prato.nome, prato.categoria, prato.operacao, id],
+                    'UPDATE pratos SET nome = ?, categoria = ?, operacao = ?, preco_venda = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+                    [prato.nome, prato.categoria, prato.operacao, prato.preco_venda, id],
                     function(err) {
                         if (err) {
                             db.run('ROLLBACK');

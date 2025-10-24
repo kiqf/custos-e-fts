@@ -49,11 +49,12 @@
                         <div class="h-8 border-b flex items-center px-6 text-sm text-gray-600">
                             FUP (1%)
                         </div>
-                        <div class="h-8 border-b flex items-center px-6 text-sm text-gray-600">
-                            Taxa de Cartão
-                        </div>
+
                         <div class="h-8 border-b flex items-center px-6 text-sm font-medium text-gray-700 bg-gray-100">
                             Total Deduções de Venda
+                        </div>
+                        <div class="h-8 border-b flex items-center px-6 text-sm font-medium text-gray-700 bg-blue-100">
+                            Faturamento Líquido
                         </div>
                     </div>
                     <div class="border-b">
@@ -104,11 +105,12 @@
                             <div id="linhaFup" class="h-8 border-b flex">
                                 <!-- FUP -->
                             </div>
-                            <div id="linhaTaxaCartao" class="h-8 border-b flex">
-                                <!-- Taxa de cartão -->
-                            </div>
+
                             <div id="linhaTotalDeducoes" class="h-8 border-b flex bg-gray-100">
                                 <!-- Total deduções -->
+                            </div>
+                            <div id="linhaFaturamentoLiquido" class="h-8 border-b flex bg-blue-100">
+                                <!-- Faturamento Líquido -->
                             </div>
                         </div>
                         
@@ -152,6 +154,7 @@
     </div>
 
     <script src="../../public/js/utils/formatar-moeda.js"></script>
+    <script src="../../public/js/utils/calcular-taxas.js"></script>
     <script src="../../public/js/components/modal.js"></script>
     <script src="../../public/js/main.js"></script>
     <script src="../../public/js/pages/calculo-custos.js"></script>

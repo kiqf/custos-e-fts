@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS pratos (
     nome VARCHAR(100) NOT NULL,
     categoria VARCHAR(100),
     operacao VARCHAR(100) NOT NULL,
+    preco_venda DECIMAL(10,2),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

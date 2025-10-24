@@ -140,6 +140,15 @@ app.delete('/api/pratos/:pratoId/insumos/:insumoId', async (req, res) => {
     }
 });
 
+app.put('/api/pratos/:id/preco', async (req, res) => {
+    try {
+        await PratoRepository.atualizarPrecoVenda(req.params.id, req.body.preco_venda);
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Rota padrão para servir o index.html
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'index.html'));
