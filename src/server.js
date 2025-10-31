@@ -76,7 +76,11 @@ app.delete('/api/insumos/:id', async (req, res) => {
 // Rotas para pratos
 app.get('/api/pratos', async (req, res) => {
     try {
-        const pratos = await PratoRepository.listarTodos();
+        const filtros = {};
+        if (req.query.categoria) filtros.categoria = req.query.categoria;
+        if (req.query.operacao) filtros.operacao = req.query.operacao;
+        
+        const pratos = await PratoRepository.listarTodos(filtros);
         res.json(pratos);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -144,6 +148,34 @@ app.put('/api/pratos/:id/preco', async (req, res) => {
     try {
         await PratoRepository.atualizarPrecoVenda(req.params.id, req.body.preco_venda);
         res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post('/api/pratos/importar', async (req, res) => {
+    try {
+        const { csvData } = req.body;
+        const result = await PratoRepository.importarCSV(csvData);
+        res.json(result);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/filtros/categorias', async (req, res) => {
+    try {
+        const categorias = await PratoRepository.listarCategorias();
+        res.json(categorias);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get('/api/filtros/operacoes', async (req, res) => {
+    try {
+        const operacoes = await PratoRepository.listarOperacoes();
+        res.json(operacoes);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

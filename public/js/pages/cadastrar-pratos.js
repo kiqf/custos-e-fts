@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     await carregarInsumos();
     await renderPratos();
     configurarModal();
+    await Filtros.criarFiltros('filtrosContainer', aplicarFiltros);
 
     // Funções da página
     async function carregarInsumos() {
@@ -32,6 +33,12 @@ document.addEventListener('DOMContentLoaded', async function() {
         });
 
         document.getElementById('pratoForm').addEventListener('submit', salvarPrato);
+        
+        document.getElementById('importPratoBtn').addEventListener('click', () => {
+            document.getElementById('csvFilePrato').click();
+        });
+        
+        document.getElementById('csvFilePrato').addEventListener('change', importarCSV);
     }
 
     function abrirModal(pratoId = null) {
@@ -183,9 +190,20 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     }
 
+    let filtrosAtuais = {};
+    
+    async function aplicarFiltros(filtros) {
+        filtrosAtuais = filtros;
+        await renderPratos();
+    }
+
     async function renderPratos() {
         try {
-            const response = await fetch('/api/pratos');
+            const params = new URLSearchParams();
+            if (filtrosAtuais.categoria) params.append('categoria', filtrosAtuais.categoria);
+            if (filtrosAtuais.operacao) params.append('operacao', filtrosAtuais.operacao);
+            
+            const response = await fetch(`/api/pratos?${params}`);
             const pratos = await response.json();
             const lista = document.getElementById('listaPratos');
             
@@ -319,5 +337,48 @@ document.addEventListener('DOMContentLoaded', async function() {
         } catch (error) {
             console.error('Erro ao carregar pratos:', error);
         }
+    }
+    
+    async function importarCSV(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = async function(e) {
+            try {
+                const csvData = e.target.result;
+                
+                const response = await fetch('/api/pratos/importar', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ csvData })
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    let mensagem = `Importação concluída!\n`;
+                    mensagem += `Linhas processadas: ${result.processados}\n`;
+                    mensagem += `Pratos criados: ${result.criados}\n`;
+                    
+                    if (result.erros.length > 0) {
+                        mensagem += `\nErros encontrados:\n${result.erros.slice(0, 10).join('\n')}`;
+                        if (result.erros.length > 10) {
+                            mensagem += `\n... e mais ${result.erros.length - 10} erros`;
+                        }
+                    }
+                    
+                    alert(mensagem);
+                    await renderPratos();
+                } else {
+                    throw new Error(result.error);
+                }
+            } catch (error) {
+                alert('Erro ao importar CSV: ' + error.message);
+            }
+        };
+        
+        reader.readAsText(file, 'UTF-8');
+        event.target.value = '';
     }
 });

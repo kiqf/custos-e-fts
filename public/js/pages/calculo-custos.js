@@ -1,10 +1,18 @@
 document.addEventListener('DOMContentLoaded', async function() {
     let pratos = [];
     let precos = {};
+    let filtrosAtuais = {};
 
+    await Filtros.criarFiltros('filtrosContainer', aplicarFiltros);
     await carregarPratos();
     renderizarTabela();
     configurarModal();
+    
+    async function aplicarFiltros(filtros) {
+        filtrosAtuais = filtros;
+        await carregarPratos();
+        renderizarTabela();
+    }
     
     // Escutar eventos de exclusão de pratos
     window.addEventListener('pratoExcluido', async (event) => {
@@ -25,8 +33,12 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     async function carregarPratos() {
         try {
+            const params = new URLSearchParams();
+            if (filtrosAtuais.categoria) params.append('categoria', filtrosAtuais.categoria);
+            if (filtrosAtuais.operacao) params.append('operacao', filtrosAtuais.operacao);
+            
             const [pratosResponse, insumosResponse] = await Promise.all([
-                fetch('/api/pratos'),
+                fetch(`/api/pratos?${params}`),
                 fetch('/api/insumos')
             ]);
             pratos = await pratosResponse.json();

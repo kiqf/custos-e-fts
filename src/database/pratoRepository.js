@@ -50,9 +50,9 @@ class PratoRepository {
     }
 
     // Listar todos os pratos
-    static listarTodos() {
+    static listarTodos(filtros = {}) {
         return new Promise((resolve, reject) => {
-            const sql = `
+            let sql = `
                 SELECT p.*, 
                        pi.quantidade,
                        pi.insumo_id,
@@ -62,10 +62,28 @@ class PratoRepository {
                 FROM pratos p
                 LEFT JOIN prato_insumos pi ON p.id = pi.prato_id
                 LEFT JOIN insumos i ON pi.insumo_id = i.id
-                ORDER BY p.nome, i.nome
             `;
             
-            db.all(sql, [], (err, rows) => {
+            const params = [];
+            const conditions = [];
+            
+            if (filtros.categoria) {
+                conditions.push('p.categoria = ?');
+                params.push(filtros.categoria);
+            }
+            
+            if (filtros.operacao) {
+                conditions.push('p.operacao = ?');
+                params.push(filtros.operacao);
+            }
+            
+            if (conditions.length > 0) {
+                sql += ' WHERE ' + conditions.join(' AND ');
+            }
+            
+            sql += ' ORDER BY p.nome, i.nome';
+            
+            db.all(sql, params, (err, rows) => {
                 if (err) {
                     reject(err);
                 } else {
@@ -264,6 +282,201 @@ class PratoRepository {
                     reject(err);
                 } else {
                     resolve(true);
+                }
+            });
+        });
+    }
+
+    // Importar pratos via CSV
+    static importarCSV(csvData) {
+        return new Promise((resolve, reject) => {
+            console.log('Iniciando importação CSV');
+            const linhas = csvData.split('\n').filter(linha => linha.trim());
+            console.log(`Total de linhas: ${linhas.length}`);
+            if (linhas.length < 2) {
+                return reject(new Error('CSV deve conter pelo menos cabeçalho e uma linha de dados'));
+            }
+
+            const cabecalho = linhas[0];
+            const separador = cabecalho.includes(';') ? ';' : ',';
+            const colunas = cabecalho.split(separador).map(col => col.trim());
+            console.log('Colunas encontradas:', colunas);
+            
+            const pratosMap = new Map();
+            const erros = [];
+            let processados = 0;
+            let criados = 0;
+
+            // Processar cada linha
+            for (let i = 1; i < linhas.length; i++) {
+                const valores = linhas[i].split(separador).map(val => val.trim());
+                console.log(`Linha ${i + 1}:`, valores);
+                if (valores.length !== colunas.length) {
+                    console.log(`Linha ${i + 1} ignorada: número de colunas incorreto`);
+                    continue;
+                }
+
+                const linha = {};
+                colunas.forEach((col, idx) => {
+                    linha[col] = valores[idx];
+                });
+                console.log(`Dados da linha ${i + 1}:`, linha);
+
+                const categoria = linha['Categoria de Prato'] || '';
+                const nomePrato = linha['Prato'];
+                const nomeInsumo = linha['Item'];
+                const quantidadeStr = linha['Quantidade']?.trim() || '1';
+                const quantidade = parseFloat(quantidadeStr.replace(',', '.')) || 1;
+                console.log(`Quantidade processada: ${quantidade}`);
+                const operacao = linha['Operação']?.trim() || 'Padrão';
+                const unidade = linha['Unidade']?.trim() || 'KG';
+
+                if (!nomePrato || !nomeInsumo) {
+                    erros.push(`Linha ${i + 1}: prato ou insumo vazio`);
+                    console.log(`Linha ${i + 1} pulada: prato='${nomePrato}', insumo='${nomeInsumo}'`);
+                    continue;
+                }
+                console.log(`Linha ${i + 1} válida: processando...`);
+
+                const chave = `${categoria}|${nomePrato}|${operacao}`;
+                if (!pratosMap.has(chave)) {
+                    console.log(`Criando prato: nome='${nomePrato}', categoria='${categoria}', operacao='${operacao}'`);
+                    pratosMap.set(chave, {
+                        nome: nomePrato,
+                        categoria: categoria || null,
+                        operacao: operacao,
+                        insumos: []
+                    });
+                }
+
+                pratosMap.get(chave).insumos.push({
+                    nomeInsumo: nomeInsumo,
+                    quantidade: quantidade
+                });
+                processados++;
+            }
+            
+            console.log(`Processamento concluído. Processados: ${processados}, Pratos únicos: ${pratosMap.size}`);
+            console.log('Erros encontrados:', erros);
+
+            // Buscar insumos existentes
+            db.all('SELECT id, nome FROM insumos', [], (err, insumos) => {
+                if (err) return reject(err);
+
+                const insumosMap = new Map();
+                insumos.forEach(insumo => {
+                    insumosMap.set(insumo.nome.toLowerCase(), insumo.id);
+                });
+
+                db.serialize(() => {
+                    db.run('BEGIN TRANSACTION');
+                    
+                    let completed = 0;
+                    const total = pratosMap.size;
+                    
+                    if (total === 0) {
+                        db.run('ROLLBACK');
+                        return resolve({ processados, criados, erros });
+                    }
+
+                    pratosMap.forEach((prato, chave) => {
+                        // Mapear insumos para IDs
+                        const insumosValidos = [];
+                        prato.insumos.forEach(insumo => {
+                            const insumoId = insumosMap.get(insumo.nomeInsumo.toLowerCase());
+                            if (insumoId) {
+                                insumosValidos.push({
+                                    insumo_id: insumoId,
+                                    quantidade: insumo.quantidade
+                                });
+                            } else {
+                                erros.push(`Insumo não encontrado: ${insumo.nomeInsumo}`);
+                            }
+                        });
+
+                        if (insumosValidos.length === 0) {
+                            completed++;
+                            if (completed === total) {
+                                db.run('COMMIT');
+                                resolve({ processados, criados, erros });
+                            }
+                            return;
+                        }
+
+                        const pratoId = uuidv4();
+                        console.log(`Inserindo prato no BD: nome='${prato.nome}', categoria='${prato.categoria}', operacao='${prato.operacao}'`);
+                        db.run(
+                            'INSERT INTO pratos (id, nome, categoria, operacao) VALUES (?, ?, ?, ?)',
+                            [pratoId, prato.nome, prato.categoria, prato.operacao],
+                            function(err) {
+                                if (err) {
+                                    console.error(`Erro ao inserir prato ${prato.nome}:`, err);
+                                    erros.push(`Erro ao criar prato ${prato.nome}: ${err.message}`);
+                                    completed++;
+                                    if (completed === total) {
+                                        db.run('COMMIT');
+                                        resolve({ processados, criados, erros });
+                                    }
+                                    return;
+                                }
+                                console.log(`Prato ${prato.nome} inserido com sucesso`);
+
+                                let insumoCompleted = 0;
+                                const insumoTotal = insumosValidos.length;
+
+                                insumosValidos.forEach(insumo => {
+                                    const insumoRelId = uuidv4();
+                                    db.run(
+                                        'INSERT INTO prato_insumos (id, prato_id, insumo_id, quantidade) VALUES (?, ?, ?, ?)',
+                                        [insumoRelId, pratoId, insumo.insumo_id, insumo.quantidade],
+                                        function(err) {
+                                            if (err) {
+                                                erros.push(`Erro ao adicionar insumo ao prato ${prato.nome}: ${err.message}`);
+                                            }
+                                            
+                                            insumoCompleted++;
+                                            if (insumoCompleted === insumoTotal) {
+                                                criados++;
+                                                completed++;
+                                                if (completed === total) {
+                                                    db.run('COMMIT');
+                                                    resolve({ processados, criados, erros });
+                                                }
+                                            }
+                                        }
+                                    );
+                                });
+                            }
+                        );
+                    });
+                });
+            });
+        });
+    }
+
+    // Listar categorias únicas
+    static listarCategorias() {
+        return new Promise((resolve, reject) => {
+            const sql = 'SELECT DISTINCT categoria FROM pratos WHERE categoria IS NOT NULL ORDER BY categoria';
+            db.all(sql, [], (err, rows) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(rows.map(row => row.categoria));
+                }
+            });
+        });
+    }
+
+    // Listar operações únicas
+    static listarOperacoes() {
+        return new Promise((resolve, reject) => {
+            const sql = 'SELECT DISTINCT operacao FROM pratos ORDER BY operacao';
+            db.all(sql, [], (err, rows) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(rows.map(row => row.operacao));
                 }
             });
         });

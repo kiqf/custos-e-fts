@@ -1,10 +1,22 @@
 document.addEventListener('DOMContentLoaded', async function() {
+    let filtrosAtuais = {};
+    
+    await Filtros.criarFiltros('filtrosContainer', aplicarFiltros);
     await renderFichasTecnicas();
+    
+    async function aplicarFiltros(filtros) {
+        filtrosAtuais = filtros;
+        await renderFichasTecnicas();
+    }
 
     async function renderFichasTecnicas() {
         try {
+            const params = new URLSearchParams();
+            if (filtrosAtuais.categoria) params.append('categoria', filtrosAtuais.categoria);
+            if (filtrosAtuais.operacao) params.append('operacao', filtrosAtuais.operacao);
+            
             const [pratosResponse, insumosResponse] = await Promise.all([
-                fetch('/api/pratos'),
+                fetch(`/api/pratos?${params}`),
                 fetch('/api/insumos')
             ]);
             const pratos = await pratosResponse.json();
