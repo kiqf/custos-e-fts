@@ -6,8 +6,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     let insumoIndex = 0;
 
     await carregarInsumos();
-    await renderPratos();
     configurarModal();
+    await renderPratos();
     await Filtros.criarFiltros('filtrosContainer', aplicarFiltros);
 
     // Funções da página
@@ -35,8 +35,15 @@ document.addEventListener('DOMContentLoaded', async function() {
         document.getElementById('pratoForm').addEventListener('submit', salvarPrato);
         
         document.getElementById('importPratoBtn').addEventListener('click', () => {
-            document.getElementById('csvFilePrato').click();
+            Modal.abrir('importModal');
         });
+        
+        setTimeout(() => {
+            Modal.configurarBotoes('importModal', 'cancelImportPrato', null);
+            document.getElementById('processImportPrato').addEventListener('click', () => {
+                document.getElementById('csvFilePrato').click();
+            });
+        }, 100);
         
         document.getElementById('csvFilePrato').addEventListener('change', importarCSV);
     }
@@ -309,6 +316,8 @@ document.addEventListener('DOMContentLoaded', async function() {
         const file = event.target.files[0];
         if (!file) return;
         
+        showLoading(true);
+        
         const reader = new FileReader();
         reader.onload = async function(e) {
             try {
@@ -323,28 +332,59 @@ document.addEventListener('DOMContentLoaded', async function() {
                 const result = await response.json();
                 
                 if (response.ok) {
-                    let mensagem = `Importação concluída!\n`;
-                    mensagem += `Linhas processadas: ${result.processados}\n`;
-                    mensagem += `Pratos criados: ${result.criados}\n`;
+                    let mensagem = `Importação concluída! Linhas processadas: ${result.processados}, Pratos criados: ${result.criados}`;
                     
                     if (result.erros.length > 0) {
-                        mensagem += `\nErros encontrados:\n${result.erros.slice(0, 10).join('\n')}`;
-                        if (result.erros.length > 10) {
-                            mensagem += `\n... e mais ${result.erros.length - 10} erros`;
-                        }
+                        mensagem += `. Erros encontrados: ${result.erros.length}`;
                     }
                     
-                    alert(mensagem);
+                    showNotification(mensagem, 'success');
+                    Modal.fechar('importModal');
                     await renderPratos();
                 } else {
                     throw new Error(result.error);
                 }
             } catch (error) {
-                alert('Erro ao importar CSV: ' + error.message);
+                showNotification('Erro ao importar CSV: ' + error.message, 'error');
+            } finally {
+                showLoading(false);
             }
         };
         
         reader.readAsText(file, 'UTF-8');
         event.target.value = '';
+    }
+    
+    function showLoading(show) {
+        const processText = document.getElementById('processTextPrato');
+        const loadingSpinner = document.getElementById('loadingSpinnerPrato');
+        const processBtn = document.getElementById('processImportPrato');
+        
+        if (show) {
+            processText.classList.add('hidden');
+            loadingSpinner.classList.remove('hidden');
+            processBtn.disabled = true;
+        } else {
+            processText.classList.remove('hidden');
+            loadingSpinner.classList.add('hidden');
+            processBtn.disabled = false;
+        }
+    }
+    
+    function showNotification(message, type = 'success') {
+        const notification = document.getElementById('notification');
+        const notificationText = document.getElementById('notificationText');
+        const notificationDiv = notification.querySelector('div');
+        
+        notificationText.textContent = message;
+        notificationDiv.className = type === 'success' 
+            ? 'bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg'
+            : 'bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg';
+        
+        notification.classList.remove('hidden');
+        
+        setTimeout(() => {
+            notification.classList.add('hidden');
+        }, 4000);
     }
 });
