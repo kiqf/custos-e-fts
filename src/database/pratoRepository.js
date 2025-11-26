@@ -53,7 +53,7 @@ class PratoRepository {
     static listarTodos(filtros = {}) {
         return new Promise((resolve, reject) => {
             let sql = `
-                SELECT p.*, 
+                SELECT p.id, p.nome, p.categoria, p.operacao, p.preco_venda, p.foto, p.link_documento, p.link_video, p.created_at, p.updated_at,
                        pi.quantidade,
                        pi.insumo_id,
                        i.nome as insumo_nome,
@@ -97,6 +97,9 @@ class PratoRepository {
                                 categoria: row.categoria,
                                 operacao: row.operacao,
                                 preco_venda: row.preco_venda,
+                                foto: row.foto,
+                                link_documento: row.link_documento,
+                                link_video: row.link_video,
                                 created_at: row.created_at,
                                 updated_at: row.updated_at,
                                 insumos: []
@@ -124,7 +127,7 @@ class PratoRepository {
     static buscarPorId(id) {
         return new Promise((resolve, reject) => {
             const sql = `
-                SELECT p.*, 
+                SELECT p.id, p.nome, p.categoria, p.operacao, p.preco_venda, p.foto, p.link_documento, p.link_video, p.created_at, p.updated_at,
                        pi.quantidade,
                        pi.insumo_id,
                        i.nome as insumo_nome,
@@ -149,6 +152,9 @@ class PratoRepository {
                         categoria: rows[0].categoria,
                         operacao: rows[0].operacao,
                         preco_venda: rows[0].preco_venda,
+                        foto: rows[0].foto,
+                        link_documento: rows[0].link_documento,
+                        link_video: rows[0].link_video,
                         created_at: rows[0].created_at,
                         updated_at: rows[0].updated_at,
                         insumos: []
@@ -290,9 +296,7 @@ class PratoRepository {
     // Importar pratos via CSV
     static importarCSV(csvData) {
         return new Promise((resolve, reject) => {
-            console.log('Iniciando importação CSV');
             const linhas = csvData.split('\n').filter(linha => linha.trim());
-            console.log(`Total de linhas: ${linhas.length}`);
             if (linhas.length < 2) {
                 return reject(new Error('CSV deve conter pelo menos cabeçalho e uma linha de dados'));
             }
@@ -300,7 +304,6 @@ class PratoRepository {
             const cabecalho = linhas[0];
             const separador = cabecalho.includes(';') ? ';' : ',';
             const colunas = cabecalho.split(separador).map(col => col.trim());
-            console.log('Colunas encontradas:', colunas);
             
             const pratosMap = new Map();
             const erros = [];
@@ -310,9 +313,7 @@ class PratoRepository {
             // Processar cada linha
             for (let i = 1; i < linhas.length; i++) {
                 const valores = linhas[i].split(separador).map(val => val.trim());
-                console.log(`Linha ${i + 1}:`, valores);
                 if (valores.length !== colunas.length) {
-                    console.log(`Linha ${i + 1} ignorada: número de colunas incorreto`);
                     continue;
                 }
 
@@ -320,29 +321,24 @@ class PratoRepository {
                 colunas.forEach((col, idx) => {
                     linha[col] = valores[idx];
                 });
-                console.log(`Dados da linha ${i + 1}:`, linha);
 
-                const categoria = linha['Categoria de Prato'] || '';
-                const nomePrato = linha['Prato'];
-                const nomeInsumo = linha['Item'];
-                const quantidadeStr = linha['Quantidade']?.trim() || '1';
+                const categoria = linha['categoria'] || '';
+                const nomePrato = linha['prato'];
+                const nomeInsumo = linha['item'];
+                const quantidadeStr = linha['quantidade']?.trim() || '1';
                 const quantidade = parseFloat(quantidadeStr.replace(',', '.')) || 1;
-                console.log(`Quantidade processada: ${quantidade}`);
-                const operacao = linha['Operação'] || linha['Operacao'] || 'Padrão';
-                const unidade = linha['Unidade']?.trim() || 'KG';
-                const precoVendaStr = linha['Preço de Venda'] || linha['Preco de Venda'] || '0';
-                const precoVenda = parseFloat(precoVendaStr.replace(',', '.')) || 0;
+                const operacao = linha['operacao'] || 'Padrão';
+                const unidade = linha['unidade']?.trim() || 'KG';
+                const precoVendaStr = linha['preco_de_venda'] || '0';
+                const precoVenda = parseFloat(precoVendaStr.replace(/[^0-9,.-]/g, '').replace(',', '.')) || 0;
 
                 if (!nomePrato || !nomeInsumo) {
                     erros.push(`Linha ${i + 1}: prato ou insumo vazio`);
-                    console.log(`Linha ${i + 1} pulada: prato='${nomePrato}', insumo='${nomeInsumo}'`);
                     continue;
                 }
-                console.log(`Linha ${i + 1} válida: processando...`);
 
                 const chave = `${categoria}|${nomePrato}|${operacao}`;
                 if (!pratosMap.has(chave)) {
-                    console.log(`Criando prato: nome='${nomePrato}', categoria='${categoria}', operacao='${operacao}'`);
                     pratosMap.set(chave, {
                         nome: nomePrato,
                         categoria: categoria || null,
@@ -350,6 +346,12 @@ class PratoRepository {
                         preco_venda: precoVenda,
                         insumos: []
                     });
+                } else {
+                    // Atualizar preço de venda se for maior que zero
+                    const pratoExistente = pratosMap.get(chave);
+                    if (precoVenda > 0) {
+                        pratoExistente.preco_venda = precoVenda;
+                    }
                 }
 
                 pratosMap.get(chave).insumos.push({
@@ -359,8 +361,7 @@ class PratoRepository {
                 processados++;
             }
             
-            console.log(`Processamento concluído. Processados: ${processados}, Pratos únicos: ${pratosMap.size}`);
-            console.log('Erros encontrados:', erros);
+
 
             // Buscar insumos existentes
             db.all('SELECT id, nome FROM insumos', [], async (err, insumos) => {
@@ -439,11 +440,11 @@ class PratoRepository {
                 linha[col] = valores[idx];
             });
             
-            if (linha['Item'] === nomeInsumo) {
+            if (linha['item'] === nomeInsumo) {
                 return {
-                    unidade: linha['Unidade'] || 'UN',
-                    preco: parseFloat((linha['Preço'] || linha['Preco'] || linha['Preço'] || '0').replace(',', '.')) || 0,
-                    rendimento: parseFloat((linha['Rendimento'] || '1').replace(',', '.')) || 1
+                    unidade: linha['unidade'] || 'UN',
+                    preco: parseFloat((linha['preco'] || '0').replace(',', '.')) || 0,
+                    rendimento: parseFloat((linha['rendimento'] || '1').replace(',', '.')) || 1
                 };
             }
         }
@@ -486,13 +487,11 @@ class PratoRepository {
             }
 
             const pratoId = uuidv4();
-            console.log(`Inserindo prato no BD: nome='${prato.nome}', categoria='${prato.categoria}', operacao='${prato.operacao}'`);
             db.run(
                 'INSERT INTO pratos (id, nome, categoria, operacao, preco_venda) VALUES (?, ?, ?, ?, ?)',
                 [pratoId, prato.nome, prato.categoria, prato.operacao, prato.preco_venda],
                 function(err) {
                     if (err) {
-                        console.error(`Erro ao inserir prato ${prato.nome}:`, err);
                         erros.push(`Erro ao criar prato ${prato.nome}: ${err.message}`);
                         completed++;
                         if (completed === total) {
@@ -501,7 +500,6 @@ class PratoRepository {
                         }
                         return;
                     }
-                    console.log(`Prato ${prato.nome} inserido com sucesso`);
 
                     let insumoCompleted = 0;
                     const insumoTotal = insumosValidos.length;

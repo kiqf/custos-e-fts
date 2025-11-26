@@ -91,15 +91,15 @@ async function importarCSV(e) {
         }
 
         const separator = lines[0].includes(';') ? ';' : ',';
-        const header = lines[0].split(separator).map(h => h.trim().toUpperCase());
+        const header = lines[0].split(separator).map(h => h.trim().toLowerCase());
         
-        const nomeIdx = header.findIndex(h => h === 'NOME');
-        const unidadeIdx = header.findIndex(h => h === 'UNIDADE');
-        const precoIdx = header.findIndex(h => h === 'PREÇO' || h === 'PRECO');
-        const rendimentoIdx = header.findIndex(h => h === 'RENDIMENTO');
+        const nomeIdx = header.findIndex(h => h === 'nome');
+        const unidadeIdx = header.findIndex(h => h === 'unidade');
+        const precoIdx = header.findIndex(h => h === 'preco');
+        const rendimentoIdx = header.findIndex(h => h === 'rendimento');
         
         if (nomeIdx === -1 || unidadeIdx === -1 || precoIdx === -1 || rendimentoIdx === -1) {
-            showNotification('Cabeçalho deve conter: NOME, UNIDADE, PRECO (ou PREÇO), RENDIMENTO', 'error');
+            showNotification('Cabeçalho deve conter: nome, unidade, preco, rendimento', 'error');
             return;
         }
 
