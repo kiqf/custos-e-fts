@@ -29,8 +29,7 @@
                 <div class="flex items-center gap-2">
                     <button type="button" id="addInsumoBtn" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors">Adicionar</button>
                     <button type="submit" class="mt-4 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors">Salvar</button>
-                    <button type="button" id="importBtn" class="mt-4 px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors">Importar</button>
-                    <input type="file" id="csvFile" accept=".csv" class="hidden">
+                    <button type="button" id="importBtn" class="mt-4 px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors">Importar Insumos</button>
                 </div>
             </form>
             <div id="salvosContainer" class="mt-6">
@@ -75,6 +74,46 @@
                     <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Salvar</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Modal de Importação -->
+    <div id="importModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 w-full max-w-2xl">
+            <h3 class="text-lg font-semibold mb-4">Importar Insumos via CSV</h3>
+            <div class="mb-4">
+                <h4 class="font-medium mb-2">Formato do arquivo CSV:</h4>
+                <div class="bg-gray-100 p-3 rounded text-sm">
+                    <p class="mb-2"><strong>Cabeçalho obrigatório:</strong></p>
+                    <code>NOME,UNIDADE,PRECO,RENDIMENTO</code>
+                    <p class="mt-3 mb-2"><strong>Exemplo de dados:</strong></p>
+                    <code>Farinha de Trigo,KG,5.50,1<br>
+                    Açúcar Cristal,KG,4.20,1<br>
+                    Leite Integral,LT,6.80,1</code>
+                </div>
+                <div class="mt-3 text-sm text-gray-600">
+                    <p><strong>Unidades aceitas:</strong> KG, G, LT, ML, UN, CX, PCT</p>
+                    <p><strong>Preço:</strong> Use ponto ou vírgula como separador decimal</p>
+                    <p><strong>Separador:</strong> Vírgula (,) ou ponto e vírgula (;)</p>
+                </div>
+            </div>
+            <div class="mb-4">
+                <input type="file" id="csvFile" accept=".csv" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+            </div>
+            <div class="flex justify-end gap-2">
+                <button type="button" id="cancelImport" class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400">Cancelar</button>
+                <button type="button" id="processImport" class="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700">
+                    <span id="processText">Processar Arquivo</span>
+                    <span id="loadingSpinner" class="hidden ml-2">⏳ Processando...</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notificação -->
+    <div id="notification" class="fixed top-4 right-4 z-50 hidden">
+        <div class="bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg">
+            <span id="notificationText"></span>
         </div>
     </div>
 

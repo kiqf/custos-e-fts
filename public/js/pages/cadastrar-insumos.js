@@ -11,9 +11,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Import CSV handler
     document.getElementById('importBtn').addEventListener('click', () => {
-        document.getElementById('csvFile').click();
+        Modal.abrir('importModal');
     });
 
+    setTimeout(() => {
+        Modal.configurarBotoes('importModal', 'cancelImport', null);
+        document.getElementById('processImport').addEventListener('click', () => {
+            document.getElementById('csvFile').click();
+        });
+    }, 100);
     document.getElementById('csvFile').addEventListener('change', importarCSV);
     document.getElementById('insumosForm').addEventListener('submit', salvarInsumos);
     document.getElementById('editForm').addEventListener('submit', atualizarInsumo);
@@ -73,52 +79,91 @@ async function importarCSV(e) {
     const file = e.target.files[0];
     if (!file) return;
 
-    const text = await file.text();
-    const lines = text.split('\n').filter(line => line.trim());
-    
-    if (lines.length < 2) {
-        alert('Arquivo CSV deve ter pelo menos um cabeçalho e uma linha de dados.');
-        return;
-    }
-
-    const separator = lines[0].includes(';') ? ';' : ',';
-    const header = lines[0].split(separator).map(h => h.trim().toUpperCase());
-    
-    const nomeIdx = header.findIndex(h => h === 'NOME');
-    const unidadeIdx = header.findIndex(h => h === 'UNIDADE');
-    const precoIdx = header.findIndex(h => h === 'PREÇO' || h === 'PRECO');
-    const rendimentoIdx = header.findIndex(h => h === 'RENDIMENTO');
-    
-    if (nomeIdx === -1 || unidadeIdx === -1 || precoIdx === -1 || rendimentoIdx === -1) {
-        alert('Cabeçalho deve conter: NOME, UNIDADE, PRECO (ou PREÇO), RENDIMENTO');
-        return;
-    }
-
-    const insumos = [];
-    for (let i = 1; i < lines.length; i++) {
-        const values = lines[i].split(separator).map(v => v.trim());
-        const precoLimpo = values[precoIdx].replace(/[^0-9,.]/g, '').replace(/(,.*?),/g, '$1');
-        if (values.length > Math.max(nomeIdx, unidadeIdx, precoIdx, rendimentoIdx)) {
-            insumos.push({
-                nome: values[nomeIdx],
-                unidade: values[unidadeIdx],
-                preco: Number(precoLimpo.replace(',', '.')) || 0,
-                rendimento: parseFloat(values[rendimentoIdx].replace(',', '.')) || 1
-            });
-        }
-    }
+    showLoading(true);
 
     try {
+        const text = await file.text();
+        const lines = text.split('\n').filter(line => line.trim());
+        
+        if (lines.length < 2) {
+            showNotification('Arquivo CSV deve ter pelo menos um cabeçalho e uma linha de dados.', 'error');
+            return;
+        }
+
+        const separator = lines[0].includes(';') ? ';' : ',';
+        const header = lines[0].split(separator).map(h => h.trim().toUpperCase());
+        
+        const nomeIdx = header.findIndex(h => h === 'NOME');
+        const unidadeIdx = header.findIndex(h => h === 'UNIDADE');
+        const precoIdx = header.findIndex(h => h === 'PREÇO' || h === 'PRECO');
+        const rendimentoIdx = header.findIndex(h => h === 'RENDIMENTO');
+        
+        if (nomeIdx === -1 || unidadeIdx === -1 || precoIdx === -1 || rendimentoIdx === -1) {
+            showNotification('Cabeçalho deve conter: NOME, UNIDADE, PRECO (ou PREÇO), RENDIMENTO', 'error');
+            return;
+        }
+
+        const insumos = [];
+        for (let i = 1; i < lines.length; i++) {
+            const values = lines[i].split(separator).map(v => v.trim());
+            const precoLimpo = values[precoIdx].replace(/[^0-9,.]/g, '').replace(/(,.*?),/g, '$1');
+            if (values.length > Math.max(nomeIdx, unidadeIdx, precoIdx, rendimentoIdx)) {
+                insumos.push({
+                    nome: values[nomeIdx],
+                    unidade: values[unidadeIdx],
+                    preco: Number(precoLimpo.replace(',', '.')) || 0,
+                    rendimento: parseFloat(values[rendimentoIdx].replace(',', '.')) || 1
+                });
+            }
+        }
+
         for (const insumo of insumos) {
             await salvarInsumo(insumo);
         }
-        alert(`${insumos.length} insumo(s) importados com sucesso.`);
+        
+        showNotification(`${insumos.length} insumo(s) importados com sucesso!`, 'success');
+        Modal.fechar('importModal');
         await renderSalvos();
+        
     } catch (error) {
-        alert('Erro ao importar insumos: ' + error.message);
+        showNotification('Erro ao importar insumos: ' + error.message, 'error');
+    } finally {
+        showLoading(false);
+        e.target.value = '';
     }
+}
 
-    e.target.value = '';
+function showLoading(show) {
+    const processText = document.getElementById('processText');
+    const loadingSpinner = document.getElementById('loadingSpinner');
+    const processBtn = document.getElementById('processImport');
+    
+    if (show) {
+        processText.classList.add('hidden');
+        loadingSpinner.classList.remove('hidden');
+        processBtn.disabled = true;
+    } else {
+        processText.classList.remove('hidden');
+        loadingSpinner.classList.add('hidden');
+        processBtn.disabled = false;
+    }
+}
+
+function showNotification(message, type = 'success') {
+    const notification = document.getElementById('notification');
+    const notificationText = document.getElementById('notificationText');
+    const notificationDiv = notification.querySelector('div');
+    
+    notificationText.textContent = message;
+    notificationDiv.className = type === 'success' 
+        ? 'bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg'
+        : 'bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg';
+    
+    notification.classList.remove('hidden');
+    
+    setTimeout(() => {
+        notification.classList.add('hidden');
+    }, 4000);
 }
 
 async function salvarInsumos(e) {
