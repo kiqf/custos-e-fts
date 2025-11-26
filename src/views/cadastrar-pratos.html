@@ -7,7 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100">
-    <nav class="bg-gray-800 text-white py-4 mb-8">
+    <nav class="bg-gray-800 text-white py-2 mb-8">
         <div class="container mx-auto px-4">
             <div class="flex flex-wrap justify-center gap-4 md:gap-8">
                 <a href="resumo-pratos.html" class="px-4 py-2 rounded hover:bg-gray-700 transition-colors">Resumo</a>
@@ -28,7 +28,6 @@
             </div>
             
             <div id="pratosContainer" class="mt-6">
-                <h2 class="text-xl font-semibold mb-4">Pratos Cadastrados</h2>
                 <div id="listaPratos" class="shadow overflow-hidden border-b border-gray-200 sm:rounded-lg overflow-y-auto" style="max-height: 400px;"></div>
             </div>
         </div>
@@ -97,11 +96,11 @@
                 <h4 class="font-medium mb-2">Formato do arquivo CSV:</h4>
                 <div class="bg-gray-100 p-3 rounded text-sm">
                     <p class="mb-2"><strong>Cabeçalho obrigatório:</strong></p>
-                    <code>Categoria de Prato,Prato,Item,Quantidade,Unidade,Preço,Rendimento,Operação</code>
+                    <code>Categoria de Prato,Prato,Item,Quantidade,Unidade,Preço,Rendimento,Operação,Preço de Venda</code>
                     <p class="mt-3 mb-2"><strong>Exemplo de dados:</strong></p>
-                    <code>Lanches,X-Burger,Pão de Hamburguer,2,UN,3.50,1,Divino Fogão<br>
-                    Lanches,X-Burger,Hamburguer 120g,1,UN,8.00,1,Divino Fogão<br>
-                    Lanches,X-Salada,Pão de Hamburguer,2,UN,3.50,1,Divino Fogão</code>
+                    <code>Lanches,X-Burger,Pão de Hamburguer,2,UN,3.50,1,Divino Fogão,15.90<br>
+                    Lanches,X-Burger,Hamburguer 120g,1,UN,8.00,1,Divino Fogão,15.90<br>
+                    Lanches,X-Salada,Pão de Hamburguer,2,UN,3.50,1,Divino Fogão,18.50</code>
                 </div>
                 <div class="mt-3 text-sm text-gray-600">
                     <p><strong>Operações aceitas:</strong> Divino Fogão, Fazenda das Delícias, Box Divino, Divino Pra Toda Fome</p>

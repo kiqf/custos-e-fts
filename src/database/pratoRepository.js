@@ -330,6 +330,8 @@ class PratoRepository {
                 console.log(`Quantidade processada: ${quantidade}`);
                 const operacao = linha['Operação'] || linha['Operacao'] || 'Padrão';
                 const unidade = linha['Unidade']?.trim() || 'KG';
+                const precoVendaStr = linha['Preço de Venda'] || linha['Preco de Venda'] || '0';
+                const precoVenda = parseFloat(precoVendaStr.replace(',', '.')) || 0;
 
                 if (!nomePrato || !nomeInsumo) {
                     erros.push(`Linha ${i + 1}: prato ou insumo vazio`);
@@ -345,6 +347,7 @@ class PratoRepository {
                         nome: nomePrato,
                         categoria: categoria || null,
                         operacao: operacao,
+                        preco_venda: precoVenda,
                         insumos: []
                     });
                 }
@@ -485,8 +488,8 @@ class PratoRepository {
             const pratoId = uuidv4();
             console.log(`Inserindo prato no BD: nome='${prato.nome}', categoria='${prato.categoria}', operacao='${prato.operacao}'`);
             db.run(
-                'INSERT INTO pratos (id, nome, categoria, operacao) VALUES (?, ?, ?, ?)',
-                [pratoId, prato.nome, prato.categoria, prato.operacao],
+                'INSERT INTO pratos (id, nome, categoria, operacao, preco_venda) VALUES (?, ?, ?, ?, ?)',
+                [pratoId, prato.nome, prato.categoria, prato.operacao, prato.preco_venda],
                 function(err) {
                     if (err) {
                         console.error(`Erro ao inserir prato ${prato.nome}:`, err);
