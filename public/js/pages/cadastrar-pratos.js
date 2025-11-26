@@ -212,127 +212,93 @@ document.addEventListener('DOMContentLoaded', async function() {
                 return;
             }
             
-            const table = document.createElement('table');
-            table.className = 'min-w-full divide-y divide-gray-200';
-            
-            const thead = document.createElement('thead');
-            thead.className = 'bg-gray-50 sticky top-0 z-10';
-            thead.innerHTML = `
-                <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nome</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Categoria</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Insumos</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Quantidade</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Preço</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Operação</th>
-                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Ações</th>
-                </tr>
-            `;
-            
-            const tbody = document.createElement('tbody');
-            tbody.className = 'bg-white divide-y divide-gray-200';
-            
-            let rowIndex = 0;
-            pratos.forEach(prato => {
-                prato.insumos.forEach(insumo => {
-                    const tr = document.createElement('tr');
-                    tr.className = rowIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50';
-                    
-                    const nomeCell = document.createElement('td');
-                    nomeCell.className = 'px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900';
-                    nomeCell.textContent = prato.nome;
-                    
-                    const categoriaCell = document.createElement('td');
-                    categoriaCell.className = 'px-6 py-4 whitespace-nowrap text-sm text-gray-900';
-                    categoriaCell.textContent = prato.categoria || '-';
-                    
-                    const insumoCell = document.createElement('td');
-                    insumoCell.className = 'px-6 py-4 whitespace-nowrap text-sm text-gray-900';
-                    insumoCell.textContent = `${insumo.nome} (${insumo.unidade})`;
-                    
-                    const quantidadeCell = document.createElement('td');
-                    quantidadeCell.className = 'px-6 py-4 whitespace-nowrap text-sm text-gray-900';
-                    quantidadeCell.textContent = formatarRendimento(insumo.quantidade);
-                    
-                    const precoCell = document.createElement('td');
-                    precoCell.className = 'px-6 py-4 whitespace-nowrap text-sm text-gray-900';
-                    precoCell.textContent = formatarMoeda(insumo.preco);
-                    
-                    const operacaoCell = document.createElement('td');
-                    operacaoCell.className = 'px-6 py-4 whitespace-nowrap text-sm text-gray-900';
-                    operacaoCell.textContent = prato.operacao;
-                    
-                    const acoesCell = document.createElement('td');
-                    acoesCell.className = 'px-6 py-4 whitespace-nowrap text-right text-sm font-medium';
-                    
-                    const editBtn = document.createElement('button');
-                    editBtn.className = 'text-indigo-600 hover:text-indigo-900 mr-3';
-                    editBtn.textContent = 'Editar';
-                    editBtn.addEventListener('click', () => {
-                        abrirModal(prato.id);
-                    });
-                    
-                    const removeBtn = document.createElement('button');
-                    removeBtn.className = 'text-red-600 hover:text-red-900 mr-3';
-                    removeBtn.textContent = 'Remover Insumo';
-                    removeBtn.addEventListener('click', async () => {
-                        if (confirm('Tem certeza que deseja remover este insumo do prato?')) {
-                            try {
-                                await fetch(`/api/pratos/${prato.id}/insumos/${insumo.insumo_id}`, {
-                                    method: 'DELETE'
-                                });
-                                await renderPratos();
-                            } catch (error) {
-                                alert('Erro ao remover insumo: ' + error.message);
-                            }
-                        }
-                    });
-                    
-                    const deletePratoBtn = document.createElement('button');
-                    deletePratoBtn.className = 'text-red-800 hover:text-red-900';
-                    deletePratoBtn.textContent = 'Excluir Prato';
-                    deletePratoBtn.addEventListener('click', async () => {
-                        if (confirm('Tem certeza que deseja excluir este prato completamente?')) {
-                            try {
-                                await fetch(`/api/pratos/${prato.id}`, {
-                                    method: 'DELETE'
-                                });
-                                await renderPratos();
-                                
-                                // Notificar outras páginas sobre a exclusão
-                                if (window.opener && !window.opener.closed) {
-                                    window.opener.postMessage({ type: 'PRATO_DELETED', pratoId: prato.id }, '*');
-                                }
-                                
-                                // Disparar evento customizado
-                                window.dispatchEvent(new CustomEvent('pratoExcluido', { detail: { pratoId: prato.id } }));
-                            } catch (error) {
-                                alert('Erro ao excluir prato: ' + error.message);
-                            }
-                        }
-                    });
-                    
-                    acoesCell.appendChild(editBtn);
-                    acoesCell.appendChild(removeBtn);
-                    acoesCell.appendChild(deletePratoBtn);
-                    
-                    tr.appendChild(nomeCell);
-                    tr.appendChild(categoriaCell);
-                    tr.appendChild(insumoCell);
-                    tr.appendChild(quantidadeCell);
-                    tr.appendChild(precoCell);
-                    tr.appendChild(operacaoCell);
-                    tr.appendChild(acoesCell);
-                    tbody.appendChild(tr);
-                    
-                    rowIndex++;
-                });
-            });
-            
-            table.appendChild(thead);
-            table.appendChild(tbody);
             lista.innerHTML = '';
-            lista.appendChild(table);
+            
+            pratos.forEach(prato => {
+                const pratoDiv = document.createElement('div');
+                pratoDiv.className = 'border border-gray-200 rounded-lg p-4 mb-4 bg-white';
+                
+                const header = document.createElement('div');
+                header.className = 'flex justify-between items-start mb-3';
+                
+                const infoDiv = document.createElement('div');
+                
+                const nomeH3 = document.createElement('h3');
+                nomeH3.className = 'text-lg font-semibold text-gray-900';
+                nomeH3.textContent = prato.nome;
+                
+                const metaDiv = document.createElement('div');
+                metaDiv.className = 'text-sm text-gray-600 mt-1';
+                metaDiv.innerHTML = `
+                    <span class="mr-4">Categoria: ${prato.categoria || 'Não informada'}</span>
+                    <span>Operação: ${prato.operacao}</span>
+                `;
+                
+                infoDiv.appendChild(nomeH3);
+                infoDiv.appendChild(metaDiv);
+                
+                const acoesDiv = document.createElement('div');
+                acoesDiv.className = 'flex gap-2';
+                
+                const editBtn = document.createElement('button');
+                editBtn.className = 'px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm';
+                editBtn.textContent = 'Editar';
+                editBtn.addEventListener('click', () => abrirModal(prato.id));
+                
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-sm';
+                deleteBtn.textContent = 'Excluir Prato';
+                deleteBtn.addEventListener('click', async () => {
+                    if (confirm('Tem certeza que deseja excluir este prato completamente?')) {
+                        try {
+                            await fetch(`/api/pratos/${prato.id}`, { method: 'DELETE' });
+                            await renderPratos();
+                            
+                            if (window.opener && !window.opener.closed) {
+                                window.opener.postMessage({ type: 'PRATO_DELETED', pratoId: prato.id }, '*');
+                            }
+                            
+                            window.dispatchEvent(new CustomEvent('pratoExcluido', { detail: { pratoId: prato.id } }));
+                        } catch (error) {
+                            alert('Erro ao excluir prato: ' + error.message);
+                        }
+                    }
+                });
+                
+                acoesDiv.appendChild(editBtn);
+                acoesDiv.appendChild(deleteBtn);
+                
+                header.appendChild(infoDiv);
+                header.appendChild(acoesDiv);
+                
+                const insumosDiv = document.createElement('div');
+                insumosDiv.className = 'border-t pt-3';
+                
+                const insumosTitle = document.createElement('h4');
+                insumosTitle.className = 'text-sm font-medium text-gray-700 mb-2';
+                insumosTitle.textContent = 'Insumos:';
+                
+                const insumosList = document.createElement('div');
+                insumosList.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2';
+                
+                prato.insumos.forEach(insumo => {
+                    const insumoItem = document.createElement('div');
+                    insumoItem.className = 'bg-gray-50 p-2 rounded text-sm';
+                    insumoItem.innerHTML = `
+                        <div class="font-medium">${insumo.nome}</div>
+                        <div class="text-gray-600">${formatarRendimento(insumo.quantidade)} ${insumo.unidade} - ${formatarMoeda(insumo.preco)}</div>
+                    `;
+                    insumosList.appendChild(insumoItem);
+                });
+                
+                insumosDiv.appendChild(insumosTitle);
+                insumosDiv.appendChild(insumosList);
+                
+                pratoDiv.appendChild(header);
+                pratoDiv.appendChild(insumosDiv);
+                
+                lista.appendChild(pratoDiv);
+            });
             
         } catch (error) {
             console.error('Erro ao carregar pratos:', error);

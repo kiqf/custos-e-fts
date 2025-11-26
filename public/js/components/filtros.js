@@ -48,6 +48,10 @@ class Filtros {
                 aplicarFiltros();
             });
 
+            // Garantir que os filtros iniciem limpos
+            categoriaSelect.value = '';
+            operacaoSelect.value = '';
+
         } catch (error) {
             console.error('Erro ao carregar filtros:', error);
         }
