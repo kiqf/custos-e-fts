@@ -12,8 +12,8 @@ class PratoRepository {
                 
                 // Inserir prato
                 db.run(
-                    'INSERT INTO pratos (id, nome, categoria, operacao, preco_venda) VALUES (?, ?, ?, ?, ?)',
-                    [pratoId, prato.nome, prato.categoria, prato.operacao, prato.preco_venda || null],
+                    'INSERT INTO pratos (id, nome, categoria, operacao, preco_venda, foto, link_documento, link_video) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+                    [pratoId, prato.nome, prato.categoria, prato.operacao, prato.preco_venda || null, prato.foto, prato.link_documento, prato.link_video],
                     function(err) {
                         if (err) {
                             db.run('ROLLBACK');
@@ -222,8 +222,8 @@ class PratoRepository {
                 
                 // Atualizar prato
                 db.run(
-                    'UPDATE pratos SET nome = ?, categoria = ?, operacao = ?, preco_venda = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
-                    [prato.nome, prato.categoria, prato.operacao, prato.preco_venda, id],
+                    'UPDATE pratos SET nome = ?, categoria = ?, operacao = ?, preco_venda = ?, foto = ?, link_documento = ?, link_video = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+                    [prato.nome, prato.categoria, prato.operacao, prato.preco_venda, prato.foto, prato.link_documento, prato.link_video, id],
                     function(err) {
                         if (err) {
                             db.run('ROLLBACK');
@@ -328,7 +328,7 @@ class PratoRepository {
                 const quantidadeStr = linha['Quantidade']?.trim() || '1';
                 const quantidade = parseFloat(quantidadeStr.replace(',', '.')) || 1;
                 console.log(`Quantidade processada: ${quantidade}`);
-                const operacao = linha['Operação']?.trim() || 'Padrão';
+                const operacao = linha['Operação'] || linha['Operacao'] || 'Padrão';
                 const unidade = linha['Unidade']?.trim() || 'KG';
 
                 if (!nomePrato || !nomeInsumo) {
@@ -360,7 +360,7 @@ class PratoRepository {
             console.log('Erros encontrados:', erros);
 
             // Buscar insumos existentes
-            db.all('SELECT id, nome FROM insumos', [], (err, insumos) => {
+            db.all('SELECT id, nome FROM insumos', [], async (err, insumos) => {
                 if (err) return reject(err);
 
                 const insumosMap = new Map();
@@ -368,89 +368,165 @@ class PratoRepository {
                     insumosMap.set(insumo.nome.toLowerCase(), insumo.id);
                 });
 
+                // Coletar insumos únicos que precisam ser criados
+                const insumosParaCriar = new Map();
+                pratosMap.forEach(prato => {
+                    prato.insumos.forEach(insumo => {
+                        const nomeInsumo = insumo.nomeInsumo.toLowerCase();
+                        if (!insumosMap.has(nomeInsumo) && !insumosParaCriar.has(nomeInsumo)) {
+                            // Extrair dados do CSV para criar o insumo
+                            const dadosInsumo = this.extrairDadosInsumo(csvData, insumo.nomeInsumo);
+                            insumosParaCriar.set(nomeInsumo, {
+                                nome: insumo.nomeInsumo,
+                                unidade: dadosInsumo.unidade || 'UN',
+                                preco: dadosInsumo.preco || 0,
+                                rendimento: dadosInsumo.rendimento || 1
+                            });
+                        }
+                    });
+                });
+
                 db.serialize(() => {
                     db.run('BEGIN TRANSACTION');
                     
-                    let completed = 0;
-                    const total = pratosMap.size;
+                    // Criar insumos que não existem
+                    let insumosCreated = 0;
+                    const totalInsumosToCreate = insumosParaCriar.size;
                     
-                    if (total === 0) {
-                        db.run('ROLLBACK');
-                        return resolve({ processados, criados, erros });
+                    if (totalInsumosToCreate === 0) {
+                        this.criarPratos(pratosMap, insumosMap, processados, criados, erros, resolve, reject);
+                        return;
                     }
-
-                    pratosMap.forEach((prato, chave) => {
-                        // Mapear insumos para IDs
-                        const insumosValidos = [];
-                        prato.insumos.forEach(insumo => {
-                            const insumoId = insumosMap.get(insumo.nomeInsumo.toLowerCase());
-                            if (insumoId) {
-                                insumosValidos.push({
-                                    insumo_id: insumoId,
-                                    quantidade: insumo.quantidade
-                                });
-                            } else {
-                                erros.push(`Insumo não encontrado: ${insumo.nomeInsumo}`);
-                            }
-                        });
-
-                        if (insumosValidos.length === 0) {
-                            completed++;
-                            if (completed === total) {
-                                db.run('COMMIT');
-                                resolve({ processados, criados, erros });
-                            }
-                            return;
-                        }
-
-                        const pratoId = uuidv4();
-                        console.log(`Inserindo prato no BD: nome='${prato.nome}', categoria='${prato.categoria}', operacao='${prato.operacao}'`);
+                    
+                    insumosParaCriar.forEach((dadosInsumo, nomeInsumo) => {
+                        const insumoId = uuidv4();
                         db.run(
-                            'INSERT INTO pratos (id, nome, categoria, operacao) VALUES (?, ?, ?, ?)',
-                            [pratoId, prato.nome, prato.categoria, prato.operacao],
+                            'INSERT INTO insumos (id, nome, unidade, preco, rendimento) VALUES (?, ?, ?, ?, ?)',
+                            [insumoId, dadosInsumo.nome, dadosInsumo.unidade, dadosInsumo.preco, dadosInsumo.rendimento],
                             function(err) {
                                 if (err) {
-                                    console.error(`Erro ao inserir prato ${prato.nome}:`, err);
-                                    erros.push(`Erro ao criar prato ${prato.nome}: ${err.message}`);
-                                    completed++;
-                                    if (completed === total) {
-                                        db.run('COMMIT');
-                                        resolve({ processados, criados, erros });
-                                    }
-                                    return;
+                                    erros.push(`Erro ao criar insumo ${dadosInsumo.nome}: ${err.message}`);
+                                } else {
+                                    insumosMap.set(nomeInsumo, insumoId);
                                 }
-                                console.log(`Prato ${prato.nome} inserido com sucesso`);
-
-                                let insumoCompleted = 0;
-                                const insumoTotal = insumosValidos.length;
-
-                                insumosValidos.forEach(insumo => {
-                                    const insumoRelId = uuidv4();
-                                    db.run(
-                                        'INSERT INTO prato_insumos (id, prato_id, insumo_id, quantidade) VALUES (?, ?, ?, ?)',
-                                        [insumoRelId, pratoId, insumo.insumo_id, insumo.quantidade],
-                                        function(err) {
-                                            if (err) {
-                                                erros.push(`Erro ao adicionar insumo ao prato ${prato.nome}: ${err.message}`);
-                                            }
-                                            
-                                            insumoCompleted++;
-                                            if (insumoCompleted === insumoTotal) {
-                                                criados++;
-                                                completed++;
-                                                if (completed === total) {
-                                                    db.run('COMMIT');
-                                                    resolve({ processados, criados, erros });
-                                                }
-                                            }
-                                        }
-                                    );
-                                });
+                                
+                                insumosCreated++;
+                                if (insumosCreated === totalInsumosToCreate) {
+                                    PratoRepository.criarPratos(pratosMap, insumosMap, processados, criados, erros, resolve, reject);
+                                }
                             }
                         );
                     });
                 });
             });
+        });
+    }
+    
+    // Método auxiliar para extrair dados do insumo do CSV
+    static extrairDadosInsumo(csvData, nomeInsumo) {
+        const linhas = csvData.split('\n');
+        const cabecalho = linhas[0];
+        const separador = cabecalho.includes(';') ? ';' : ',';
+        const colunas = cabecalho.split(separador).map(col => col.trim());
+        
+        for (let i = 1; i < linhas.length; i++) {
+            const valores = linhas[i].split(separador).map(val => val.trim());
+            const linha = {};
+            colunas.forEach((col, idx) => {
+                linha[col] = valores[idx];
+            });
+            
+            if (linha['Item'] === nomeInsumo) {
+                return {
+                    unidade: linha['Unidade'] || 'UN',
+                    preco: parseFloat((linha['Preço'] || linha['Preco'] || linha['Preço'] || '0').replace(',', '.')) || 0,
+                    rendimento: parseFloat((linha['Rendimento'] || '1').replace(',', '.')) || 1
+                };
+            }
+        }
+        
+        return { unidade: 'UN', preco: 0, rendimento: 1 };
+    }
+    
+    // Método auxiliar para criar pratos
+    static criarPratos(pratosMap, insumosMap, processados, criados, erros, resolve, reject) {
+        let completed = 0;
+        const total = pratosMap.size;
+        
+        if (total === 0) {
+            db.run('COMMIT');
+            return resolve({ processados, criados, erros });
+        }
+
+        pratosMap.forEach((prato, chave) => {
+            // Mapear insumos para IDs
+            const insumosValidos = [];
+            prato.insumos.forEach(insumo => {
+                const insumoId = insumosMap.get(insumo.nomeInsumo.toLowerCase());
+                if (insumoId) {
+                    insumosValidos.push({
+                        insumo_id: insumoId,
+                        quantidade: insumo.quantidade
+                    });
+                } else {
+                    erros.push(`Insumo não encontrado: ${insumo.nomeInsumo}`);
+                }
+            });
+
+            if (insumosValidos.length === 0) {
+                completed++;
+                if (completed === total) {
+                    db.run('COMMIT');
+                    resolve({ processados, criados, erros });
+                }
+                return;
+            }
+
+            const pratoId = uuidv4();
+            console.log(`Inserindo prato no BD: nome='${prato.nome}', categoria='${prato.categoria}', operacao='${prato.operacao}'`);
+            db.run(
+                'INSERT INTO pratos (id, nome, categoria, operacao) VALUES (?, ?, ?, ?)',
+                [pratoId, prato.nome, prato.categoria, prato.operacao],
+                function(err) {
+                    if (err) {
+                        console.error(`Erro ao inserir prato ${prato.nome}:`, err);
+                        erros.push(`Erro ao criar prato ${prato.nome}: ${err.message}`);
+                        completed++;
+                        if (completed === total) {
+                            db.run('COMMIT');
+                            resolve({ processados, criados, erros });
+                        }
+                        return;
+                    }
+                    console.log(`Prato ${prato.nome} inserido com sucesso`);
+
+                    let insumoCompleted = 0;
+                    const insumoTotal = insumosValidos.length;
+
+                    insumosValidos.forEach(insumo => {
+                        const insumoRelId = uuidv4();
+                        db.run(
+                            'INSERT INTO prato_insumos (id, prato_id, insumo_id, quantidade) VALUES (?, ?, ?, ?)',
+                            [insumoRelId, pratoId, insumo.insumo_id, insumo.quantidade],
+                            function(err) {
+                                if (err) {
+                                    erros.push(`Erro ao adicionar insumo ao prato ${prato.nome}: ${err.message}`);
+                                }
+                                
+                                insumoCompleted++;
+                                if (insumoCompleted === insumoTotal) {
+                                    criados++;
+                                    completed++;
+                                    if (completed === total) {
+                                        db.run('COMMIT');
+                                        resolve({ processados, criados, erros });
+                                    }
+                                }
+                            }
+                        );
+                    });
+                }
+            );
         });
     }
 

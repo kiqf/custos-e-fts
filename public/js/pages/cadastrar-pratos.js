@@ -60,6 +60,9 @@ document.addEventListener('DOMContentLoaded', async function() {
             document.getElementById('pratoId').value = '';
             document.getElementById('categoriaPrato').value = '';
             document.getElementById('operacaoPrato').value = '';
+            document.getElementById('fotoPrato').value = '';
+            document.getElementById('linkDocumentoPrato').value = '';
+            document.getElementById('linkVideoPrato').value = '';
             document.getElementById('insumosContainer').innerHTML = '';
             document.getElementById('addInsumoBtn').click();
         }
@@ -74,6 +77,9 @@ document.addEventListener('DOMContentLoaded', async function() {
             document.getElementById('nomePrato').value = prato.nome;
             document.getElementById('categoriaPrato').value = prato.categoria || '';
             document.getElementById('operacaoPrato').value = prato.operacao;
+            document.getElementById('fotoPrato').value = prato.foto || '';
+            document.getElementById('linkDocumentoPrato').value = prato.link_documento || '';
+            document.getElementById('linkVideoPrato').value = prato.link_video || '';
             
             const container = document.getElementById('insumosContainer');
             container.innerHTML = '';
@@ -169,6 +175,9 @@ document.addEventListener('DOMContentLoaded', async function() {
             nome,
             categoria: categoria || null,
             operacao: document.getElementById('operacaoPrato').value,
+            foto: document.getElementById('fotoPrato').value || null,
+            link_documento: document.getElementById('linkDocumentoPrato').value || null,
+            link_video: document.getElementById('linkVideoPrato').value || null,
             insumos: insumoIds.map((id, i) => ({
                 insumo_id: id,
                 quantidade: parseFloat(quantidades[i].replace(',', '.'))

@@ -34,9 +34,56 @@ document.addEventListener('DOMContentLoaded', async function() {
                 const fichaDiv = document.createElement('div');
                 fichaDiv.className = 'bg-white rounded-lg shadow p-6';
                 
+                const headerDiv = document.createElement('div');
+                headerDiv.className = 'flex gap-6 mb-6';
+                
+                const infoDiv = document.createElement('div');
+                infoDiv.className = 'flex-1';
+                
                 const titulo = document.createElement('h2');
                 titulo.className = 'text-xl font-semibold mb-4 text-gray-800';
                 titulo.textContent = prato.nome;
+                
+                const linksDiv = document.createElement('div');
+                linksDiv.className = 'space-y-2';
+                
+                if (prato.link_documento) {
+                    const docLink = document.createElement('a');
+                    docLink.href = prato.link_documento;
+                    docLink.target = '_blank';
+                    docLink.className = 'block text-blue-600 hover:text-blue-800 text-sm';
+                    docLink.textContent = '📄 Modo de Preparo (Documento)';
+                    linksDiv.appendChild(docLink);
+                }
+                
+                if (prato.link_video) {
+                    const videoLink = document.createElement('a');
+                    videoLink.href = prato.link_video;
+                    videoLink.target = '_blank';
+                    videoLink.className = 'block text-blue-600 hover:text-blue-800 text-sm';
+                    videoLink.textContent = '🎥 Vídeo de Preparo';
+                    linksDiv.appendChild(videoLink);
+                }
+                
+                infoDiv.appendChild(titulo);
+                infoDiv.appendChild(linksDiv);
+                
+                if (prato.foto) {
+                    const fotoDiv = document.createElement('div');
+                    fotoDiv.className = 'w-48 h-32';
+                    
+                    const img = document.createElement('img');
+                    img.src = prato.foto;
+                    img.alt = prato.nome;
+                    img.className = 'w-full h-full object-cover rounded-lg';
+                    img.onerror = function() { this.style.display = 'none'; };
+                    
+                    fotoDiv.appendChild(img);
+                    headerDiv.appendChild(infoDiv);
+                    headerDiv.appendChild(fotoDiv);
+                } else {
+                    headerDiv.appendChild(infoDiv);
+                }
                 
                 const table = document.createElement('table');
                 table.className = 'w-full table-fixed divide-y divide-gray-200';
@@ -112,13 +159,21 @@ document.addEventListener('DOMContentLoaded', async function() {
                 table.appendChild(thead);
                 table.appendChild(tbody);
                 
+                const footerDiv = document.createElement('div');
+                footerDiv.className = 'mt-4 flex justify-between items-center';
+                
+                const precoVendaDiv = document.createElement('div');
+                precoVendaDiv.innerHTML = `<strong>Preço de Venda: ${formatarMoeda(prato.preco_venda || 0)}</strong>`;
+                
                 const custoDiv = document.createElement('div');
-                custoDiv.className = 'mt-4 text-right';
                 custoDiv.innerHTML = `<strong>Custo da Preparação: ${formatarMoeda(custoTotal)}</strong>`;
                 
-                fichaDiv.appendChild(titulo);
+                footerDiv.appendChild(precoVendaDiv);
+                footerDiv.appendChild(custoDiv);
+                
+                fichaDiv.appendChild(headerDiv);
                 fichaDiv.appendChild(table);
-                fichaDiv.appendChild(custoDiv);
+                fichaDiv.appendChild(footerDiv);
                 container.appendChild(fichaDiv);
             });
             

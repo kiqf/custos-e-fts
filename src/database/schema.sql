@@ -16,9 +16,14 @@ CREATE TABLE IF NOT EXISTS pratos (
     categoria VARCHAR(100),
     operacao VARCHAR(100) NOT NULL,
     preco_venda DECIMAL(10,2),
+    foto TEXT,
+    link_documento TEXT,
+    link_video TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+
 
 -- Criação da tabela de relacionamento prato-insumo
 CREATE TABLE IF NOT EXISTS prato_insumos (
