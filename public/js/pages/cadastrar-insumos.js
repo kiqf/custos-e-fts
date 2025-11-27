@@ -117,11 +117,28 @@ async function importarCSV(e) {
             }
         }
 
+        const insumosExistentes = await fetch('/api/insumos').then(r => r.json());
+        const salvos = [];
+        
         for (const insumo of insumos) {
-            await salvarInsumo(insumo);
+            const nomeNormalizado = normalizar(insumo.nome);
+            const jaExiste = insumosExistentes.some(existente => 
+                normalizar(existente.nome) === nomeNormalizado
+            );
+            
+            if (!jaExiste && !salvos.some(s => normalizar(s.nome) === nomeNormalizado)) {
+                await salvarInsumo(insumo);
+                salvos.push(insumo);
+            }
         }
         
-        showNotification(`${insumos.length} insumo(s) importados com sucesso!`, 'success');
+        const duplicatas = insumos.length - salvos.length;
+        if (duplicatas > 0) {
+            showNotification(`${salvos.length} insumo(s) importados. ${duplicatas} duplicata(s) ignorada(s).`, 'success');
+        } else {
+            showNotification(`${salvos.length} insumo(s) importados com sucesso!`, 'success');
+        }
+        
         Modal.fechar('importModal');
         await renderSalvos();
         
