@@ -15,45 +15,49 @@ Uma aplicação web para gerenciamento e visualização de custos, desenvolvida 
 ```
 custos-e-fts/
 │
-├── index.html
-├── resumo-pratos.html
-├── resumo-insumos.html
-├── fichas-tecnicas.html
-├── cadastrar-pratos.html
-├── cadastrar-insumos.html
+├── index.html               # página inicial
 │
-├── /public
-│   ├── /css
-│   ├── /js
-│   │   ├── /pages           # scripts específicos por página
-│   │   │   ├── resumo-pratos.js
-│   │   │   ├── resumo-insumos.js
-│   │   │   ├── fichas-tecnicas.js
-│   │   │   ├── cadastrar-pratos.js
-│   │   │   └── cadastrar-insumos.js
-│   │   ├── /components      # scripts reaproveitáveis (ex: modais, tabelas)
-│   │   │   ├── modal.js
-│   │   │   ├── tabela.js
-│   │   │   └── alert.js
-│   │   ├── /utils           # funções utilitárias genéricas
-│   │   │   ├── formatar-moeda.js
-│   │   │   ├── calcular-total.js
-│   │   │   └── validar-campos.js
-│   │   └── main.js          # script de inicialização global
-│   └── /assets              # imagens, ícones, etc.
+├── /public                  # arquivos estáticos frontend
+│   └── /js
+│       ├── /pages           # scripts específicos por página
+│       │   ├── cadastrar-insumos.js
+│       │   ├── cadastrar-pratos.js
+│       │   ├── calculo-custos.js
+│       │   ├── fichas-tecnicas.js
+│       │   └── resumo-pratos.js
+│       ├── /components      # componentes reutilizáveis
+│       │   ├── filtros.js
+│       │   └── modal.js
+│       ├── /utils           # funções utilitárias
+│       │   ├── calcular-custos-variaveis.js
+│       │   ├── calcular-taxas.js
+│       │   ├── formatar-moeda.js
+│       │   ├── normalizador.js
+│       │   └── validar-campos.js
+│       └── main.js          # script de inicialização global
 │
-├── /src                     # código backend (MVCRS)
-│   ├── /models              # lógica de dados
-│   ├── /views               # se renderizar templates
-│   ├── /controllers         # controle de rotas/fluxos
-│   ├── /routes              # rotas da aplicação
-│   └── /services            # regras de negócio e integrações
+├── /src                     # código backend
+│   ├── /database            # camada de dados
+│   │   ├── database.sqlite  # banco SQLite
+│   │   ├── db.js           # configuração do banco
+│   │   ├── insumoRepository.js
+│   │   ├── pratoRepository.js
+│   │   └── schema.sql      # estrutura do banco
+│   ├── /views              # páginas HTML
+│   │   ├── cadastrar-insumos.html
+│   │   ├── cadastrar-pratos.html
+│   │   ├── calculo-custos.html
+│   │   ├── fichas-tecnicas.html
+│   │   └── resumo-pratos.html
+│   └── server.js           # servidor Express
 │
-├── /tests
-└── README.md                 # Documentação
+├── .env.example            # exemplo de variáveis de ambiente
+├── .gitignore
+├── package.json
+└── README.md
 ```
 
-Nota: As pastas dentro de `src/`, `public/` e `tests/` foram criadas vazias para organizar a arquitetura MVCRS; os arquivos serão adicionados conforme o desenvolvimento avança.
+**Nota**: A arquitetura MVCRS (Model-View-Controller-Routes-Services) será implementada em futuras atualizações para melhor organização do código backend.
 
 ## Instalação e Execução
 
