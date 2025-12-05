@@ -1,6 +1,40 @@
-# Resumo Custos
+# 📌 Análise do Problema e Estratégias de Solução
 
-Uma aplicação web para gerenciamento e visualização de custos, desenvolvida com JavaScript vanilla, Node.js e SQLite.
+Este projeto foi criado para substituir um sistema baseado em Excel que gerava erros frequentes, dificuldade de manutenção e problemas de uso simultâneo pela equipe. A aplicação web traz mais confiabilidade, escalabilidade e facilidade de atualização.
+
+---
+
+## 1. 🔍 Análise das Situações-Problema
+
+- Planilhas geravam *conflitos de versão* e perda de informações.
+- *Validações frágeis* e fáceis de quebrar.
+- Alterações exigiam *manutenção manual*, tornando o processo lento.
+- Falta de suporte multiusuário → sobrescritas e inconsistências.
+- Ausência de auditoria e histórico de alterações.
+
+*Causa-raiz:* dependência de um sistema manual, sem validações centralizadas, sem controle de concorrência e sem estrutura para expansão.
+
+---
+
+## 2. 🎯 Fatores-Chave para Intervenção
+
+- Necessidade de um *modelo de dados centralizado*.
+- Validações confiáveis e padronizadas.
+- Suporte a vários usuários simultaneamente.
+- Logs e auditoria para rastreamento.
+- Processo de atualização mais seguro e escalável.
+
+---
+
+## 3. 🚀 Estratégias Iniciais de Solução
+
+- Criação de uma aplicação web com *validações server-side e client-side*.
+- Implementação de *auditoria*, autenticação e controle de acesso.
+- Estruturação do banco de dados para reduzir erros e duplicidades.
+- Suporte real a múltiplos usuários, eliminando conflitos.
+- Planejamento de melhorias futuras como integrações, dashboards e automações.
+
+---
 
 ## Tecnologias Utilizadas
 
